@@ -1,0 +1,28 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+
+# WhatsApp Auth / Sessions (SANGAT PENTING, BERISI KREDENSIAL LOGIN)
+sessions/
+session/
+auth_info_baileys/
+
+# Environment Variables
+.env
+.env.test
+.env.production
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Mac OS
+.DS_Store

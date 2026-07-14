@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NETORA WA Gateway - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, var(--bg-color));
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .header p { color: var(--text-muted); margin-top: 0.5rem; }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media(min-width: 768px) {
+            .container { grid-template-columns: 350px 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-muted); }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .form-control:focus { border-color: var(--primary); }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+        .session-list { display: flex; flex-direction: column; gap: 1rem; }
+        .session-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info h3 { font-size: 1.1rem; font-weight: 600; }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        .status-connected { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .status-disconnected { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .status-waiting { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+
+        .action-btns { display: flex; gap: 0.5rem; }
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-sm:hover { background: rgba(255,255,255,0.2); }
+
+        /* Modal QR */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 50;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        
+        .modal-content {
+            background: var(--bg-color);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        
+        #qrcode-container {
+            background: white; padding: 1rem; border-radius: 8px;
+            margin: 1.5rem auto; display: inline-block;
+        }
+        
+        .close-btn {
+            background: transparent; color: var(--text-muted); border: 1px solid var(--text-muted);
+            padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 1rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>NETORA WA Gateway</h1>
+        <p>Dashboard Controller Multi-Device</p>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar Actions -->
+        <div>
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h2>+ Tambah Device Sesi</h2>
+                <div class="form-group">
+                    <label>ID Sesi (Contoh: cabang_bali)</label>
+                    <input type="text" id="newSessionId" class="form-control" placeholder="Masukkan ID Sesi unik...">
+                </div>
+                <button class="btn" onclick="startSession()">Inisialisasi Sesi</button>
+            </div>
+
+            <div class="card">
+                <h2>Uji Kirim Pesan</h2>
+                <div class="form-group">
+                    <label>Pilih ID Sesi (Pengirim)</label>
+                    <select id="sendSessionId" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP Tujuan (08x/62x)</label>
+                    <input type="text" id="sendPhone" class="form-control" placeholder="08123456789">
+                </div>
+                <div class="form-group">
+                    <label>Isi Pesan</label>
+                    <textarea id="sendMessage" class="form-control" rows="3" placeholder="Halo, ini pesan test..."></textarea>
+                </div>
+                <button class="btn" style="background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="testSendMessage()">Kirim Pesan</button>
+            </div>
+        </div>
+
+        <!-- Session List -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>Daftar Sesi (Device Aktif)</h2>
+                <button class="btn-sm" onclick="fetchSessions()">🔄 Refresh</button>
+            </div>
+            
+            <div class="session-list" id="sessionList">
+                <div style="text-align:center; color: var(--text-muted); padding: 2rem;">Loading data...</div>
+            </div>
+        </div>
+
+        <!-- Setting Akun -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h2>Pengaturan Keamanan</h2>
+            <div class="form-group">
+                <label>Username Baru</label>
+                <input type="text" id="newUsername" class="form-control" placeholder="Ketik username baru...">
+            </div>
+            <div class="form-group">
+                <label>Password Baru</label>
+                <input type="password" id="newPassword" class="form-control" placeholder="Ketik password baru...">
+            </div>
+            <button class="btn" style="background: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" onclick="changeCredentials()">Simpan Akses Login</button>
+        </div>
+
+    </div>
+
+    <!-- QR Modal -->
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal-content">
+            <h2 id="qrTitle">Scan QR Code</h2>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.5rem;">Buka WhatsApp > Tautkan Perangkat</p>
+            <div id="qrcode-container"></div>
+            <p id="qrStatusText" style="font-size:0.875rem; margin-top:1rem; color: #f59e0b;"></p>
+            <button class="close-btn" onclick="closeModal()">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = ''; // Gunakan relative path karena di-serve dari port yg sama
+        let qrPollingInterval = null;
+        let currentPollingSession = null;
+
+        async function fetchSessions() {
+            try {
+                const res = await fetch(`${API_URL}/api/sessions`);
+                const json = await res.json();
+                
+                const list = document.getElementById('sessionList');
+                const select = document.getElementById('sendSessionId');
+                list.innerHTML = '';
+                select.innerHTML = '<option value="">-- Pilih Sesi --</option>';
+
+                if (json.data.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem;">Belum ada sesi/device yang terdaftar.</div>`;
+                    return;
+                }
+
+                json.data.forEach(session => {
+                    // Badge Logic
+                    let badgeClass = 'status-disconnected';
+                    let statusText = session.status;
+
+                    if (session.status === 'Connected') badgeClass = 'status-connected';
+                    else if (session.hasQr) {
+                        badgeClass = 'status-waiting';
+                        statusText = 'Menunggu Scan QR';
+                    }
+
+                    // Render List
+                    list.innerHTML += `
+                        <div class="session-item">
+                            <div class="session-info">
+                                <h3>ID: ${session.sessionId}</h3>
+                                <span class="status-badge ${badgeClass}">${statusText}</span>
+                            </div>
+                            <div class="action-btns">
+                                ${session.status !== 'Connected' ? `<button class="btn-sm" style="background:#3b82f6;" onclick="showQr('${session.sessionId}')">Lihat QR</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+
+                    // Render Select Option (only connected ones)
+                    if (session.status === 'Connected') {
+                        select.innerHTML += `<option value="${session.sessionId}">${session.sessionId}</option>`;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error fetching sessions:", error);
+            }
+        }
+
+        async function startSession() {
+            const input = document.getElementById('newSessionId');
+            const sessionId = input.value.trim();
+            if (!sessionId) return alert("ID Sesi tidak boleh kosong!");
+
+            try {
+                const res = await fetch(`${API_URL}/api/session/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                const json = await res.json();
+                alert(json.message);
+                if (json.status) {
+                    input.value = '';
+                    fetchSessions();
+                    // Auto buka modal QR setelah delay
+                    setTimeout(() => showQr(sessionId), 1500); 
+                }
+            } catch (error) {
+                alert("Gagal memulai sesi");
+            }
+        }
+
+        async function showQr(sessionId) {
+            document.getElementById('qrModal').classList.add('active');
+            document.getElementById('qrTitle').innerText = `Scan QR untuk [${sessionId}]`;
+            document.getElementById('qrcode-container').innerHTML = '';
+            document.getElementById('qrStatusText').innerText = 'Mengambil QR Code...';
+            currentPollingSession = sessionId;
+            
+            pollQr();
+            qrPollingInterval = setInterval(pollQr, 3000);
+        }
+
+        async function pollQr() {
+            if (!currentPollingSession) return;
+            try {
+                const res = await fetch(`${API_URL}/api/qr?sessionId=${currentPollingSession}`);
+                const json = await res.json();
+                
+                const qrContainer = document.getElementById('qrcode-container');
+                const statusText = document.getElementById('qrStatusText');
+
+                if (json.status === 'Scan' && json.qr_string) {
+                    qrContainer.innerHTML = '';
+                    new QRCode(qrContainer, {
+                        text: json.qr_string,
+                        width: 200,
+                        height: 200,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff"
+                    });
+                    statusText.innerText = "Silakan Scan Sekarang.";
+                } else if (json.status === 'Connected') {
+                    statusText.innerText = "✅ Perangkat berhasil tertaut!";
+                    statusText.style.color = "var(--success)";
+                    qrContainer.innerHTML = '✔️';
+                    qrContainer.style.fontSize = '4rem';
+                    qrContainer.style.color = 'var(--success)';
+                    clearInterval(qrPollingInterval);
+                    setTimeout(() => { closeModal(); fetchSessions(); }, 2000);
+                } else {
+                    statusText.innerText = json.message || "Menunggu sistem...";
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('qrModal').classList.remove('active');
+            clearInterval(qrPollingInterval);
+            currentPollingSession = null;
+            fetchSessions();
+        }
+
+        async function testSendMessage() {
+            const sessionId = document.getElementById('sendSessionId').value;
+            const phone = document.getElementById('sendPhone').value;
+            const message = document.getElementById('sendMessage').value;
+
+            if (!sessionId || !phone || !message) return alert("Harap lengkapi form pengiriman pesan!");
+
+            try {
+                const res = await fetch(`${API_URL}/api/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, phone, message })
+                });
+                const json = await res.json();
+                alert(json.message);
+                if(json.status) {
+                    document.getElementById('sendPhone').value = '';
+                    document.getElementById('sendMessage').value = '';
+                }
+            } catch (error) {
+                alert("Gagal mengirim pesan");
+            }
+        }
+
+        async function changeCredentials() {
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+
+            if (!username || !password) return alert("Username dan Password baru wajib diisi!");
+
+            if (!confirm("⚠️ PERHATIAN!\n\nApakah Anda yakin ingin mengganti kredensial login?\nSetelah tersimpan, halaman akan termuat ulang dan Anda harus login dengan akses yang baru.")) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/settings/auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const json = await res.json();
+                alert(json.message);
+                if (json.status) {
+                    window.location.reload(); // Paksa browser untuk popup auth ulang
+                }
+            } catch (error) {
+                alert("Terjadi kesalahan sistem saat menyimpan pengaturan.");
+            }
+        }
+
+        // Auto Refresh
+        fetchSessions();
+        setInterval(fetchSessions, 10000); // Polling background setiap 10 detik
+
+    </script>
+</body>
+</html>
