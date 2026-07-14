@@ -20,20 +20,12 @@ Ikuti langkah-langkah di bawah ini untuk menginstal aplikasi di server VPS baru 
    ```
 
 2. **Jalankan Instalasi Otomatis:**
-   Script ini akan menginstal Node.js versi terbaru, PM2, dan seluruh library yang dibutuhkan:
+   Script ini akan menginstal Node.js, PM2, library aplikasi, sekaligus mendaftarkannya sebagai layanan *background* otomatis (*auto-start on reboot*):
    ```bash
    sudo bash install.sh
    ```
 
-3. **Jalankan Aplikasi secara Permanen (PM2):**
-   Agar aplikasi WA Gateway ini menyala nonstop 24 jam meskipun Anda menutup aplikasi PuTTY/Terminal SSH, jalankan perintah ini:
-   ```bash
-   pm2 start index.js --name "netora-wa"
-   pm2 save
-   ```
-   *(Opsional: ketik `pm2 startup` agar aplikasi otomatis menyala saat VPS direstart).*
-
-4. **Buka Dashboard UI:**
+3. **Buka Dashboard UI:**
    Akses aplikasi lewat browser menggunakan IP Server Anda di Port 3000:
    👉 **`http://IP_VPS_ANDA:3000`**
    - **Username Default:** `admin`

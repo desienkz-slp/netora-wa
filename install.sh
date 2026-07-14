@@ -14,28 +14,33 @@ fi
 # Pindah ke direktori tempat script ini berada agar support dieksekusi dari mana saja
 cd "$(dirname "$0")" || exit
 
-echo "[1/4] Memperbarui Repository OS..."
+echo "[1/5] Memperbarui Repository OS..."
 apt-get update -y
 apt-get install -y curl
 
-echo "[2/4] Instalasi Node.js (versi 20 LTS)..."
+echo "[2/5] Instalasi Node.js (versi 20 LTS)..."
 # Setup repo nodejs
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs
 
-echo "[3/4] Instalasi PM2 (Process Manager)..."
+echo "[3/5] Instalasi PM2 (Process Manager)..."
 npm install -g pm2
 
-echo "[4/4] Instalasi Dependencies Aplikasi..."
+echo "[4/5] Instalasi Dependencies Aplikasi..."
 npm install
+
+echo "[5/5] Mengatur Auto-Start (PM2)..."
+pm2 start index.js --name "netora-wa"
+env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root
+pm2 save
 
 echo ""
 echo "============================================"
-echo " Instalasi Selesai! 🎉"
+echo " Instalasi Selesai & Berjalan! 🎉"
 echo "============================================"
-echo "Cara menjalankan aplikasi:"
-echo "1. Ketik: node index.js (Untuk scan QR code pertama kali)"
-echo "2. Jika sudah sukses terhubung, stop dengan CTRL+C"
-echo "3. Ketik: pm2 start index.js --name netora-wa"
-echo "4. Ketik: pm2 save (agar auto-start saat VPS restart)"
+echo "NETORA WA Gateway sudah aktif di background."
+echo "Aplikasi akan otomatis berjalan jika server restart."
+echo ""
+echo "Akses Dashboard melalui browser Anda di:"
+echo "http://[IP-Server]:3000"
 echo "============================================"
