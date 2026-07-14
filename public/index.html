@@ -807,7 +807,13 @@
                 
                 sessionsData.forEach(session => {
                     if (session.status === 'Connected') {
-                        window.sendSessionTs.addOption({value: session.sessionId, text: session.sessionId});
+                        let label = session.sessionId;
+                        if (session.phone || session.name) {
+                            label += ' -';
+                            if (session.phone) label += ` ${session.phone}`;
+                            if (session.name) label += ` (${session.name})`;
+                        }
+                        window.sendSessionTs.addOption({value: session.sessionId, text: label});
                     }
                 });
 
