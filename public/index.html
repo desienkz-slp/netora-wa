@@ -372,7 +372,10 @@
                     clearInterval(qrCountdownInterval);
                     text.innerText = '0';
                     bar.style.width = '0%';
-                    document.getElementById('qrStatusText').innerText = '⏳ QR kadaluarsa, menunggu QR baru...';
+                    // Reset lastQrString agar polling langsung render QR baru
+                    lastQrString = null;
+                    document.getElementById('qrcode-container').style.opacity = '0.2';
+                    document.getElementById('qrStatusText').innerText = '⏳ QR kadaluarsa, memuat QR baru...';
                     return;
                 }
                 text.innerText = secondsLeft;
