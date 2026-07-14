@@ -168,6 +168,7 @@
         #qrcode-container {
             background: white; padding: 1rem; border-radius: 8px;
             margin: 1.5rem auto; display: inline-block;
+            transition: opacity 0.2s ease;
         }
         
         .close-btn {
@@ -249,6 +250,12 @@
             <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.5rem;">Buka WhatsApp > Tautkan Perangkat</p>
             <div id="qrcode-container"></div>
             <p id="qrStatusText" style="font-size:0.875rem; margin-top:1rem; color: #f59e0b;"></p>
+            <div id="qrCountdown" style="display:none; margin-top:0.5rem;">
+                <div style="background:rgba(255,255,255,0.1); border-radius:8px; overflow:hidden; height:6px; width:100%;">
+                    <div id="qrCountdownBar" style="height:100%; background:linear-gradient(90deg, #f59e0b, #ef4444); border-radius:8px; transition: width 1s linear; width:100%;"></div>
+                </div>
+                <p id="qrCountdownText" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">QR berlaku <span id="qrSecondsLeft">20</span> detik lagi</p>
+            </div>
             <button class="close-btn" onclick="closeModal()">Tutup</button>
         </div>
     </div>
@@ -257,6 +264,9 @@
         const API_URL = ''; // Gunakan relative path karena di-serve dari port yg sama
         let qrPollingInterval = null;
         let currentPollingSession = null;
+        let lastQrString = null;
+        let qrCountdownInterval = null;
+        const QR_LIFETIME_SECONDS = 20; // WhatsApp QR biasanya berlaku ~20 detik
 
         async function fetchSessions() {
             try {
@@ -337,10 +347,37 @@
             document.getElementById('qrTitle').innerText = `Scan QR untuk [${sessionId}]`;
             document.getElementById('qrcode-container').innerHTML = '';
             document.getElementById('qrStatusText').innerText = 'Mengambil QR Code...';
+            document.getElementById('qrCountdown').style.display = 'none';
+            lastQrString = null;
             currentPollingSession = sessionId;
             
             pollQr();
-            qrPollingInterval = setInterval(pollQr, 3000);
+            qrPollingInterval = setInterval(pollQr, 2000);
+        }
+
+        function startQrCountdown() {
+            clearInterval(qrCountdownInterval);
+            let secondsLeft = QR_LIFETIME_SECONDS;
+            const countdownDiv = document.getElementById('qrCountdown');
+            const bar = document.getElementById('qrCountdownBar');
+            const text = document.getElementById('qrSecondsLeft');
+            
+            countdownDiv.style.display = 'block';
+            bar.style.width = '100%';
+            text.innerText = secondsLeft;
+
+            qrCountdownInterval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    clearInterval(qrCountdownInterval);
+                    text.innerText = '0';
+                    bar.style.width = '0%';
+                    document.getElementById('qrStatusText').innerText = '⏳ QR kadaluarsa, menunggu QR baru...';
+                    return;
+                }
+                text.innerText = secondsLeft;
+                bar.style.width = ((secondsLeft / QR_LIFETIME_SECONDS) * 100) + '%';
+            }, 1000);
         }
 
         async function pollQr() {
@@ -353,22 +390,34 @@
                 const statusText = document.getElementById('qrStatusText');
 
                 if (json.status === 'Scan' && json.qr_string) {
-                    qrContainer.innerHTML = '';
-                    new QRCode(qrContainer, {
-                        text: json.qr_string,
-                        width: 200,
-                        height: 200,
-                        colorDark : "#0f172a",
-                        colorLight : "#ffffff"
-                    });
-                    statusText.innerText = "Silakan Scan Sekarang.";
+                    // Hanya re-render jika QR string berubah (auto-refresh tanpa flicker)
+                    if (json.qr_string !== lastQrString) {
+                        lastQrString = json.qr_string;
+                        qrContainer.style.opacity = '0.3';
+                        setTimeout(() => {
+                            qrContainer.innerHTML = '';
+                            new QRCode(qrContainer, {
+                                text: json.qr_string,
+                                width: 200,
+                                height: 200,
+                                colorDark : "#0f172a",
+                                colorLight : "#ffffff"
+                            });
+                            qrContainer.style.opacity = '1';
+                        }, 200);
+                        statusText.innerText = "Silakan Scan Sekarang.";
+                        statusText.style.color = "#f59e0b";
+                        startQrCountdown();
+                    }
                 } else if (json.status === 'Connected') {
                     statusText.innerText = "✅ Perangkat berhasil tertaut!";
                     statusText.style.color = "var(--success)";
                     qrContainer.innerHTML = '✔️';
                     qrContainer.style.fontSize = '4rem';
                     qrContainer.style.color = 'var(--success)';
+                    document.getElementById('qrCountdown').style.display = 'none';
                     clearInterval(qrPollingInterval);
+                    clearInterval(qrCountdownInterval);
                     setTimeout(() => { closeModal(); fetchSessions(); }, 2000);
                 } else {
                     statusText.innerText = json.message || "Menunggu sistem...";
@@ -380,8 +429,11 @@
 
         function closeModal() {
             document.getElementById('qrModal').classList.remove('active');
+            document.getElementById('qrCountdown').style.display = 'none';
             clearInterval(qrPollingInterval);
+            clearInterval(qrCountdownInterval);
             currentPollingSession = null;
+            lastQrString = null;
             fetchSessions();
         }
 

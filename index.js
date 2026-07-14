@@ -70,7 +70,7 @@ async function initSession(sessionId) {
     });
 
     // Simpan ke memory map
-    sessions.set(sessionId, { sock: sock, qr: null, connected: false });
+    sessions.set(sessionId, { sock: sock, qr: null, qrUpdatedAt: null, connected: false });
 
     // Event Listener
     sock.ev.on('connection.update', (update) => {
@@ -79,7 +79,8 @@ async function initSession(sessionId) {
 
         if (qr) {
             currentSession.qr = qr;
-            console.log(`[${sessionId}] Menunggu Scan QR Code...`);
+            currentSession.qrUpdatedAt = Date.now();
+            console.log(`[${sessionId}] Menunggu Scan QR Code... (QR updated)`);
         }
 
         if (connection === 'close') {
@@ -175,7 +176,7 @@ app.get('/api/qr', (req, res) => {
     }
 
     if (session.qr) {
-        res.json({ status: 'Scan', qr_string: session.qr });
+        res.json({ status: 'Scan', qr_string: session.qr, qrUpdatedAt: session.qrUpdatedAt });
     } else {
         res.json({ status: 'Waiting', message: 'Sedang men-generate QR Code...' });
     }
