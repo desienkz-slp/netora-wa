@@ -28,8 +28,8 @@ Ikuti langkah-langkah di bawah ini untuk menginstal aplikasi di server VPS baru 
 3. **Buka Dashboard UI:**
    Akses aplikasi lewat browser menggunakan IP Server Anda di Port 3000:
    👉 **`http://IP_VPS_ANDA:3000`**
-   - **Username Default:** `admin`
-   - **Password Default:** `password123`
+   - **Username Default:** `superadmin`
+   - **Password Default:** `admin123`
    *(Ubah segera di halaman Dashboard).*
 
 ## 📡 API Endpoint (Untuk Integrasi ke Laravel)
