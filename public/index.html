@@ -176,6 +176,26 @@
             padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 1rem;
         }
 
+        /* Toast Notification (DESIGN.md) */
+        #toast-container {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 12px; pointer-events: none;
+        }
+
+        .toast-notification {
+            background: #FFFFFF; color: #18181B; font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 500; padding: 14px 20px;
+            border-radius: 8px; box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #2563EB; display: flex; align-items: center; gap: 12px;
+            transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto; max-width: 320px; word-break: break-word;
+        }
+
+        .toast-notification.toast-success { border-left-color: #16A34A; }
+        .toast-notification.toast-error { border-left-color: #DC2626; }
+        .toast-notification.toast-warning { border-left-color: #CA8A04; }
+        .toast-notification.show { transform: translateX(0); }
+
     </style>
 </head>
 <body>
@@ -269,6 +289,9 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
     <script>
         const API_URL = ''; // Gunakan relative path karena di-serve dari port yg sama
         let qrPollingInterval = null;
@@ -276,6 +299,36 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
         let lastQrString = null;
         let qrCountdownInterval = null;
         const QR_LIFETIME_SECONDS = 20; // WhatsApp QR biasanya berlaku ~20 detik
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Determine class and icon based on type (or message contents heuristically)
+            let typeClass = 'toast-info';
+            let icon = 'ℹ️';
+            
+            const lowerMsg = message.toLowerCase();
+            if (type === 'success' || lowerMsg.includes('berhasil') || lowerMsg.includes('sukses')) {
+                typeClass = 'toast-success'; icon = '✅';
+            } else if (type === 'error' || lowerMsg.includes('gagal') || lowerMsg.includes('salah')) {
+                typeClass = 'toast-error'; icon = '❌';
+            } else if (type === 'warning' || lowerMsg.includes('perhatian')) {
+                typeClass = 'toast-warning'; icon = '⚠️';
+            }
+
+            toast.className = `toast-notification ${typeClass}`;
+            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            // Trigger animation
+            requestAnimationFrame(() => toast.classList.add('show'));
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
 
         async function fetchSessions() {
             try {
@@ -344,7 +397,7 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                     body: JSON.stringify({ sessionId })
                 });
                 const json = await res.json();
-                alert(json.message);
+                showToast(json.message);
                 if (json.status) {
                     input.value = '';
                     fetchSessions();
@@ -352,7 +405,7 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                     setTimeout(() => showQr(sessionId), 1500); 
                 }
             } catch (error) {
-                alert("Gagal memulai sesi");
+                showToast("Gagal memulai sesi");
             }
         }
 
@@ -463,10 +516,10 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                     body: JSON.stringify({ sessionId })
                 });
                 const json = await res.json();
-                alert(json.message);
+                showToast(json.message);
                 fetchSessions();
             } catch (error) {
-                alert("Gagal menghubungi server untuk reconnect.");
+                showToast("Gagal menghubungi server untuk reconnect.");
             }
         }
 
@@ -479,10 +532,10 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                     body: JSON.stringify({ sessionId })
                 });
                 const json = await res.json();
-                alert(json.message);
+                showToast(json.message);
                 fetchSessions();
             } catch (error) {
-                alert("Gagal menghubungi server untuk logout.");
+                showToast("Gagal menghubungi server untuk logout.");
             }
         }
 
@@ -495,10 +548,10 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                     body: JSON.stringify({ sessionId })
                 });
                 const json = await res.json();
-                alert(json.message);
+                showToast(json.message);
                 fetchSessions();
             } catch (error) {
-                alert("Gagal menghubungi server untuk menghapus sesi.");
+                showToast("Gagal menghubungi server untuk menghapus sesi.");
             }
         }
 
@@ -507,7 +560,7 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
             const phone = document.getElementById('sendPhone').value;
             const message = document.getElementById('sendMessage').value;
 
-            if (!sessionId || !phone || !message) return alert("Harap lengkapi form pengiriman pesan!");
+            if (!sessionId || !phone || !message) return showToast("Harap lengkapi form pengiriman pesan!");
 
             try {
                 const res = await fetch(`${API_URL}/api/send`, {
@@ -516,13 +569,13 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                     body: JSON.stringify({ sessionId, phone, message })
                 });
                 const json = await res.json();
-                alert(json.message);
+                showToast(json.message);
                 if(json.status) {
                     document.getElementById('sendPhone').value = '';
                     document.getElementById('sendMessage').value = '';
                 }
             } catch (error) {
-                alert("Gagal mengirim pesan");
+                showToast("Gagal mengirim pesan");
             }
         }
 
@@ -530,7 +583,7 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
             const username = document.getElementById('newUsername').value.trim();
             const password = document.getElementById('newPassword').value.trim();
 
-            if (!username || !password) return alert("Username dan Password baru wajib diisi!");
+            if (!username || !password) return showToast("Username dan Password baru wajib diisi!");
 
             if (!confirm("⚠️ PERHATIAN!\n\nApakah Anda yakin ingin mengganti kredensial login?\nSetelah tersimpan, halaman akan termuat ulang dan Anda harus login dengan akses yang baru.")) return;
 
@@ -541,12 +594,12 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                     body: JSON.stringify({ username, password })
                 });
                 const json = await res.json();
-                alert(json.message);
+                showToast(json.message);
                 if (json.status) {
                     window.location.reload(); // Paksa browser untuk popup auth ulang
                 }
             } catch (error) {
-                alert("Terjadi kesalahan sistem saat menyimpan pengaturan.");
+                showToast("Terjadi kesalahan sistem saat menyimpan pengaturan.");
             }
         }
 
