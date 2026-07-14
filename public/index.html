@@ -361,9 +361,12 @@
                 </div>
                 <div class="form-group" id="targetGroupContainer" style="display: none;">
                     <label>Pilih Grup WA <span id="groupLoadingText" style="color: var(--primary); font-size: 0.8rem; display: none;">(Mengambil data grup...)</span></label>
-                    <select id="sendGroup" class="form-control">
-                        <option value="">-- Pilih Grup --</option>
-                    </select>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select id="sendGroup" class="form-control" style="flex: 1;">
+                            <option value="">-- Pilih Grup --</option>
+                        </select>
+                        <button class="btn-icon" style="background: rgba(255,255,255,0.1); padding: 0 16px; height: 42px; border-radius: 8px;" onclick="copySelectedGroupId()" title="Copy ID Grup">📋</button>
+                    </div>
                 </div>
                 <button class="btn" style="background: var(--primary);" onclick="testSendMessage()">TEST</button>
             </div>
@@ -944,6 +947,20 @@
                 document.getElementById('targetNumberContainer').style.display = 'block';
                 document.getElementById('targetGroupContainer').style.display = 'none';
             }
+        }
+
+        function copySelectedGroupId() {
+            const selectGroup = document.getElementById('sendGroup');
+            const groupId = selectGroup.value;
+            if (!groupId) {
+                showToast("Silakan pilih grup terlebih dahulu", "warning");
+                return;
+            }
+            navigator.clipboard.writeText(groupId).then(() => {
+                showToast("ID Grup disalin: " + groupId, "success");
+            }).catch(err => {
+                showToast("Gagal menyalin ID Grup", "error");
+            });
         }
 
         // Trigger reload groups if session changes and group mode is active
