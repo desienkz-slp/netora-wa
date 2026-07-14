@@ -875,7 +875,8 @@
                 const json = await res.json();
                 if (json.status && json.data) {
                     json.data.forEach(group => {
-                        selectGroup.innerHTML += `<option value="${group.id}">${group.name}</option>`;
+                        const groupIdShort = group.id.split('@')[0];
+                        selectGroup.innerHTML += `<option value="${group.id}">${group.name} (ID: ${groupIdShort})</option>`;
                     });
                 } else {
                     showToast(json.message || "Gagal mengambil daftar grup", "error");
