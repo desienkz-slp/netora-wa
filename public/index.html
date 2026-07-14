@@ -26,28 +26,69 @@
             background: radial-gradient(circle at top right, #1e293b, var(--bg-color));
             color: var(--text-main);
             min-height: 100vh;
-            padding: 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
+        .navbar {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 40;
         }
-        
-        .header h1 {
-            font-size: 2.5rem;
+
+        .navbar-brand h1 {
+            font-size: 1.5rem;
             font-weight: 800;
             background: linear-gradient(to right, #60a5fa, #a78bfa);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin: 0;
             letter-spacing: -0.5px;
         }
 
-        .header p { color: var(--text-muted); margin-top: 0.5rem; }
+        .navbar-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-icon {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-icon.logout {
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .btn-icon.logout:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
 
         .container {
             width: 100%;
@@ -55,6 +96,7 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 2rem;
+            padding: 2rem;
         }
 
         @media(min-width: 768px) {
@@ -200,10 +242,15 @@
 </head>
 <body>
 
-    <div class="header">
-        <h1>NETORA WA Gateway</h1>
-        <p>Dashboard Controller Multi-Device</p>
-    </div>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <h1>NETORA WA Gateway</h1>
+        </div>
+        <div class="navbar-actions">
+            <button class="btn-icon" onclick="openSettings()">⚙️ Pengaturan</button>
+            <button class="btn-icon logout" onclick="logoutDashboard()">🚪 Logout</button>
+        </div>
+    </nav>
 
     <div class="container">
         <!-- Sidebar Actions -->
@@ -260,9 +307,12 @@
             </div>
         </div>
 
-        <!-- Setting Akun -->
-        <div class="card" style="margin-top: 1.5rem;">
-            <h2>Pengaturan Keamanan</h2>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content" style="max-width: 400px; padding: 24px; background: var(--card-bg);">
+            <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">⚙️ Pengaturan Keamanan</h2>
             <div class="form-group">
                 <label>Username Baru</label>
                 <input type="text" id="newUsername" class="form-control" placeholder="Ketik username baru...">
@@ -271,9 +321,9 @@
                 <label>Password Baru</label>
                 <input type="password" id="newPassword" class="form-control" placeholder="Ketik password baru...">
             </div>
-            <button class="btn" style="background: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" onclick="changeCredentials()">Simpan Akses Login</button>
+            <button class="btn" style="background: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); margin-bottom: 1rem;" onclick="changeCredentials()">Simpan Akses Login</button>
+            <button class="close-btn" onclick="closeSettings()">Tutup</button>
         </div>
-
     </div>
 
     <!-- QR Modal -->
@@ -316,7 +366,30 @@
         let qrCountdownInterval = null;
         const QR_LIFETIME_SECONDS = 20; // WhatsApp QR biasanya berlaku ~20 detik
 
-        function showToast(message, type = 'info') {
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function logoutDashboard() {
+            showConfirm("Apakah Anda yakin ingin keluar dari dashboard?", true).then((confirmed) => {
+                if (confirmed) {
+                    fetch(window.location.href, {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Basic ' + btoa('logout:logout') }
+                    }).then(() => {
+                        window.location.reload(true);
+                    }).catch(() => {
+                        window.location.reload(true);
+                    });
+                }
+            });
+        }
+
+        function showToast(message, type = "info") {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             
