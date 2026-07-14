@@ -5,54 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NETORA WA Gateway - Dashboard</title>
     <link rel="icon" type="image/png" href="NETORA-LOGO.png">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
-            --primary: #2563EB;
-            --primary-hover: #1D4ED8;
-            --secondary: #7C3AED;
-            --tertiary: #6B7280;
-            --bg-color: #FAFAFA;
-            --surface: #FFFFFF;
-            --success: #16A34A;
-            --warning: #CA8A04;
-            --error: #DC2626;
-            --text-main: #18181B;
-            --text-muted: #52525B;
-            
-            --border-light: #F4F4F5;
-            --border-input: #E4E4E7;
-            
-            --shadow-subtle: 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-medium: 0 4px 12px rgba(0,0,0,0.06);
-            --shadow-large: 0 12px 32px rgba(0,0,0,0.1);
+            --primary: #00d992;
+            --primary-soft: #2fd6a1;
+            --canvas: #101010;
+            --canvas-soft: #1a1a1a;
+            --ink: #f2f2f2;
+            --ink-strong: #ffffff;
+            --body: #bdbdbd;
+            --hairline: #3d3a39;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--canvas);
+            color: var(--ink);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            line-height: 1.7;
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
         }
 
         h1, h2, h3, h4, h5, h6 {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            letter-spacing: 0.01em;
-            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--ink-strong);
+            font-weight: 400;
         }
 
         .navbar {
             width: 100%;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border-light);
+            background: var(--canvas);
+            border-bottom: 1px solid var(--hairline);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
@@ -60,7 +51,6 @@
             position: sticky;
             top: 0;
             z-index: 40;
-            box-shadow: var(--shadow-subtle);
         }
 
         .navbar-brand {
@@ -71,8 +61,8 @@
 
         .navbar-brand h1 {
             font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
+            font-weight: 600;
+            letter-spacing: -0.6px;
         }
 
         .navbar-actions {
@@ -81,38 +71,32 @@
         }
 
         .btn-icon {
-            background: transparent;
-            border: 1px solid var(--border-input);
-            color: var(--text-muted);
+            background: var(--canvas);
+            border: 1px solid var(--hairline);
+            color: var(--ink);
             padding: 0.5rem 1rem;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-family: 'Inter', sans-serif;
             font-size: 0.875rem;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .btn-icon:hover {
-            background: #F4F4F5;
-            color: var(--text-main);
+            background: var(--canvas-soft);
         }
 
         .btn-icon.logout {
-            border-color: rgba(220, 38, 38, 0.2);
-            color: var(--error);
-        }
-
-        .btn-icon.logout:hover {
-            background: #FEF2F2;
+            color: var(--ink);
         }
 
         .container {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1200px;
             display: flex;
             flex-direction: column;
             gap: 2rem;
@@ -132,19 +116,14 @@
         }
 
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border-light);
+            background: var(--canvas);
+            border: 1px solid var(--hairline);
             border-radius: 8px;
             padding: 1.5rem;
-            box-shadow: var(--shadow-subtle);
-            transition: box-shadow 0.2s ease;
-        }
-        .card:hover {
-            box-shadow: var(--shadow-medium);
         }
 
         .card h2 { 
-            font-size: 1.375rem; 
+            font-size: 1.25rem; 
             font-weight: 600; 
             margin-bottom: 1.5rem; 
         }
@@ -153,129 +132,128 @@
         .form-group label { 
             display: block; 
             font-size: 0.875rem; 
-            font-weight: 500;
+            font-weight: 400;
             margin-bottom: 0.5rem; 
-            color: var(--text-muted); 
+            color: var(--body); 
         }
         
         .form-control {
             width: 100%;
-            padding: 0.625rem 0.875rem;
-            background: var(--surface);
-            border: 1px solid var(--border-input);
-            border-radius: 8px;
-            color: var(--text-main);
+            padding: 0.75rem 1rem;
+            background: var(--canvas-soft);
+            border: 1px solid var(--hairline);
+            border-radius: 6px;
+            color: var(--ink);
             font-family: 'Inter', sans-serif;
             font-size: 0.875rem;
             outline: none;
-            transition: all 0.2s;
+            transition: border-color 0.2s;
         }
-        .form-control:hover { border-color: #D4D4D8; }
-        .form-control:focus { border: 2px solid var(--primary); padding: calc(0.625rem - 1px) calc(0.875rem - 1px); }
+        .form-control:focus { border: 1px solid var(--primary-soft); }
 
         .btn {
             width: 100%;
-            padding: 0.625rem 1.25rem;
-            border: none;
-            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            border: 1px solid var(--hairline);
+            border-radius: 6px;
             font-family: 'Inter', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 500;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
             background: var(--primary);
-            color: #FFFFFF;
+            color: #101010;
+            border: none;
         }
-        .btn:hover { background: var(--primary-hover); }
+        .btn:hover { background: var(--primary-soft); }
 
         .btn-destructive {
-            background: var(--error);
+            background: var(--canvas-soft);
+            color: var(--primary-soft);
+            border: 1px solid var(--hairline);
         }
         .btn-destructive:hover {
-            background: #B91C1C;
+            background: var(--canvas);
         }
 
         .session-list { display: flex; flex-direction: column; gap: 1rem; }
         .session-item {
-            background: var(--surface);
-            border: 1px solid var(--border-light);
-            padding: 1rem;
+            background: var(--canvas);
+            border: 1px solid var(--hairline);
+            padding: 1.5rem;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .session-info h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .session-info h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--ink-strong); }
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
             font-size: 0.75rem;
-            font-family: 'Fira Code', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 500;
+            background: var(--canvas-soft);
+            border: 1px solid var(--hairline);
+            color: var(--body);
         }
-        .status-connected { background: #F0FDF4; color: var(--success); }
-        .status-disconnected { background: #FEF2F2; color: var(--error); }
-        .status-waiting { background: #FFF7ED; color: var(--warning); }
+        .status-connected { background: var(--primary); color: #101010; border: none; }
+        .status-disconnected { background: var(--canvas-soft); color: var(--body); }
+        .status-waiting { background: var(--canvas-soft); color: var(--primary-soft); }
 
         .action-btns { display: flex; gap: 0.5rem; }
         .btn-sm {
             padding: 0.375rem 0.75rem;
             font-size: 0.875rem;
-            font-weight: 500;
+            font-weight: 600;
             font-family: 'Inter', sans-serif;
             border-radius: 6px;
-            background: var(--surface);
-            color: var(--primary);
-            border: 1px solid var(--primary);
+            background: var(--canvas);
+            color: var(--ink);
+            border: 1px solid var(--hairline);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
         }
-        .btn-sm:hover { background: #EFF6FF; }
+        .btn-sm:hover { background: var(--canvas-soft); }
 
         .btn-sm.btn-danger {
-            color: var(--error);
-            border-color: var(--error);
-        }
-        .btn-sm.btn-danger:hover {
-            background: #FEF2F2;
+            color: var(--primary-soft);
         }
 
         /* Modal Overlays */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.35); /* DocuForge overlay */
+            background: rgba(16, 16, 16, 0.85); /* Dark canvas overlay */
             display: none; justify-content: center; align-items: center;
             z-index: 100;
-            backdrop-filter: blur(2px);
         }
         .modal-overlay.active { display: flex; }
         
         .modal-content {
-            background: var(--surface);
-            padding: 2rem;
-            border-radius: 12px;
+            background: var(--canvas);
+            padding: 2.5rem;
+            border-radius: 8px;
             width: 90%;
             max-width: 400px;
             text-align: center;
-            box-shadow: var(--shadow-large);
-            border: 1px solid var(--border-light);
+            border: 1px solid var(--hairline);
         }
         
         .close-btn {
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border-input);
+            background: var(--canvas);
+            color: var(--ink);
+            border: 1px solid var(--hairline);
             padding: 0.5rem 1rem;
-            border-radius: 8px;
+            border-radius: 6px;
             font-family: 'Inter', sans-serif;
             font-size: 0.875rem;
             cursor: pointer;
             width: 100%;
-            transition: all 0.2s;
+            transition: background 0.2s;
         }
-        .close-btn:hover { background: #F4F4F5; color: var(--text-main); }
+        .close-btn:hover { background: var(--canvas-soft); }
 
         #qrcode-container img { margin: 0 auto; border-radius: 8px; }
         
@@ -286,9 +264,10 @@
         }
 
         .toast-notification {
-            background: #18181B; color: #FFFFFF; font-family: 'Inter', sans-serif;
+            background: var(--canvas); color: var(--ink); font-family: 'Inter', sans-serif;
             font-size: 0.875rem; padding: 12px 16px;
-            border-radius: 8px; box-shadow: var(--shadow-medium);
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
             display: flex; align-items: center; gap: 12px;
             transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: auto; max-width: 320px; word-break: break-word;
@@ -300,11 +279,11 @@
 <body>
 
     <!-- Login Section -->
-    <div id="loginSection" style="display: none; width: 100%; min-height: 100vh; justify-content: center; align-items: center; background: var(--bg-color);">
+    <div id="loginSection" style="display: none; width: 100%; min-height: 100vh; justify-content: center; align-items: center; background: var(--canvas);">
         <div class="card" style="width: 90%; max-width: 400px; text-align: center; padding: 3rem 2rem;">
             <img src="NETORA-LOGO.png" alt="NETORA Logo" style="height: 48px; width: auto; margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-main);">Selamat Datang</h2>
-            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 2rem;">Masuk ke Dashboard NETORA WA Gateway</p>
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--ink-strong);">Selamat Datang</h2>
+            <p style="color: var(--body); font-size: 0.875rem; margin-bottom: 2rem;">Masuk ke Dashboard NETORA WA Gateway</p>
             
             <form onsubmit="handleLogin(event)">
                 <div class="form-group" style="text-align: left;">
@@ -373,7 +352,7 @@
                         <option value="">-- Pilih Grup --</option>
                     </select>
                 </div>
-                <button class="btn" style="background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="testSendMessage()">TEST</button>
+                <button class="btn" style="background: var(--primary);" onclick="testSendMessage()">TEST</button>
             </div>
         </div>
 
@@ -385,7 +364,7 @@
             </div>
             
             <div class="session-list" id="sessionList">
-                <div style="text-align:center; color: var(--text-muted); padding: 2rem;">Loading data...</div>
+                <div style="text-align:center; color: var(--body); padding: 2rem;">Loading data...</div>
             </div>
         </div>
 
@@ -403,7 +382,7 @@
                 <label>Password Baru</label>
                 <input type="password" id="newPassword" class="form-control" placeholder="Ketik password baru...">
             </div>
-            <button class="btn" style="background: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); margin-bottom: 1rem;" onclick="changeCredentials()">Simpan Akses Login</button>
+            <button class="btn" style="margin-bottom: 1rem;" class="btn btn-destructive" onclick="changeCredentials()">Simpan Akses Login</button>
             <button class="close-btn" onclick="closeSettings()">Tutup</button>
         </div>
     </div>
@@ -412,14 +391,14 @@
     <div class="modal-overlay" id="qrModal">
         <div class="modal-content">
             <h2 id="qrTitle">Scan QR Code</h2>
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.5rem;">Buka WhatsApp > Tautkan Perangkat</p>
+            <p style="color:var(--body); font-size:0.9rem; margin-top:0.5rem;">Buka WhatsApp > Tautkan Perangkat</p>
             <div id="qrcode-container"></div>
             <p id="qrStatusText" style="font-size:0.875rem; margin-top:1rem; color: #f59e0b;"></p>
             <div id="qrCountdown" style="display:none; margin-top:0.5rem;">
                 <div style="background:rgba(255,255,255,0.1); border-radius:8px; overflow:hidden; height:6px; width:100%;">
                     <div id="qrCountdownBar" style="height:100%; background:linear-gradient(90deg, #f59e0b, #ef4444); border-radius:8px; transition: width 1s linear; width:100%;"></div>
                 </div>
-                <p id="qrCountdownText" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">QR berlaku <span id="qrSecondsLeft">20</span> detik lagi</p>
+                <p id="qrCountdownText" style="font-size:0.75rem; color:var(--body); margin-top:0.4rem;">QR berlaku <span id="qrSecondsLeft">20</span> detik lagi</p>
             </div>
             <button class="close-btn" onclick="closeModal()">Tutup</button>
         </div>
@@ -427,9 +406,9 @@
 
     <!-- Confirm Modal -->
     <div class="modal-overlay" id="confirmModal">
-        <div class="modal-content" style="max-width: 400px; padding: 24px; text-align: left; background: var(--card-bg); box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div class="modal-content" style="max-width: 400px; padding: 24px; text-align: left;">
             <h3 id="confirmTitle" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"></h3>
-            <p id="confirmMessage" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.6; white-space: pre-wrap;"></p>
+            <p id="confirmMessage" style="color: var(--body); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.6; white-space: pre-wrap;"></p>
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
                 <button class="btn-sm" style="background: rgba(255,255,255,0.1); padding: 8px 16px;" id="confirmBtnCancel">Cancel</button>
                 <button class="btn-sm" style="background: var(--primary); padding: 8px 16px;" id="confirmBtnOk">OK</button>
@@ -580,7 +559,7 @@
                 // Determine styling and icon based on danger level
                 const iconHtml = isDanger ? '<span style="font-size:1.4rem;">⚠️</span>' : '<span style="font-size:1.4rem;">❔</span>';
                 title.innerHTML = `${iconHtml} <span style="color: #fff;">Konfirmasi</span>`;
-                btnOk.style.background = isDanger ? 'var(--danger)' : 'var(--primary)';
+                btnOk.style.background = isDanger ? 'var(--canvas-soft)' : 'var(--primary)'; btnOk.style.color = isDanger ? 'var(--primary-soft)' : '#101010';
                 btnOk.innerText = isDanger ? 'Ya, Lanjutkan' : 'OK';
                 
                 // Clean up any warning emojis in the message text itself
@@ -613,7 +592,7 @@
                 select.innerHTML = '<option value="">-- Pilih Sesi --</option>';
 
                 if (json.data.length === 0) {
-                    list.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem;">Belum ada sesi/device yang terdaftar.</div>`;
+                    list.innerHTML = `<div style="text-align:center; color: var(--body); padding: 2rem;">Belum ada sesi/device yang terdaftar.</div>`;
                     return;
                 }
 
@@ -638,7 +617,7 @@
                             <div class="action-btns">
                                 ${session.status !== 'Connected' ? `<button class="btn-sm" style="background:#3b82f6;" onclick="showQr('${session.sessionId}')">Lihat QR</button>` : ''}
                                 <button class="btn-sm" style="background:var(--warning);" onclick="reconnectSession('${session.sessionId}')">Reconnect</button>
-                                <button class="btn-sm" style="background:var(--danger);" onclick="logoutSession('${session.sessionId}')">Logout</button>
+                                <button class="btn-sm btn-destructive" onclick="logoutSession('${session.sessionId}')">Logout</button>
                                 <button class="btn-sm" style="background:#475569;" onclick="deleteSession('${session.sessionId}')">Delete</button>
                             </div>
                         </div>
@@ -753,10 +732,10 @@
                     }
                 } else if (json.status === 'Connected') {
                     statusText.innerText = "✅ Perangkat berhasil tertaut!";
-                    statusText.style.color = "var(--success)";
+                    statusText.style.color = "var(--primary)";
                     qrContainer.innerHTML = '✔️';
                     qrContainer.style.fontSize = '4rem';
-                    qrContainer.style.color = 'var(--success)';
+                    qrContainer.style.color = 'var(--primary)';
                     document.getElementById('qrCountdown').style.display = 'none';
                     clearInterval(qrPollingInterval);
                     clearInterval(qrCountdownInterval);
