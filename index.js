@@ -63,8 +63,8 @@ async function initSession(sessionId) {
     // Bikin socket
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true, // Akan di-print di terminal dengan info sessionId-nya
-        logger: pino({ level: 'silent' })
+        browser: ["NETORA", "Chrome", "20.0.04"],
+        logger: pino({ level: 'error' })
     });
 
     // Simpan ke memory map
@@ -87,8 +87,8 @@ async function initSession(sessionId) {
             console.log(`[${sessionId}] Koneksi terputus, reconnecting:`, shouldReconnect);
             
             if (shouldReconnect) {
-                // Hapus instance lama, buat yang baru
-                initSession(sessionId);
+                // Beri jeda 3 detik sebelum reconnect untuk menghindari infinite loop
+                setTimeout(() => initSession(sessionId), 3000);
             } else {
                 console.log(`[${sessionId}] Anda telah logout / Sesi Dicabut.`);
                 // Hapus dari memori
