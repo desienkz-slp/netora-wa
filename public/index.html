@@ -303,6 +303,8 @@
                             </div>
                             <div class="action-btns">
                                 ${session.status !== 'Connected' ? `<button class="btn-sm" style="background:#3b82f6;" onclick="showQr('${session.sessionId}')">Lihat QR</button>` : ''}
+                                <button class="btn-sm" style="background:var(--warning);" onclick="reconnectSession('${session.sessionId}')">Reconnect</button>
+                                <button class="btn-sm" style="background:var(--danger);" onclick="logoutSession('${session.sessionId}')">Logout</button>
                             </div>
                         </div>
                     `;
@@ -438,6 +440,38 @@
             currentPollingSession = null;
             lastQrString = null;
             fetchSessions();
+        }
+
+        async function reconnectSession(sessionId) {
+            if (!confirm(`Mencoba menghubungkan ulang sesi [${sessionId}]?`)) return;
+            try {
+                const res = await fetch(`${API_URL}/api/session/reconnect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                const json = await res.json();
+                alert(json.message);
+                fetchSessions();
+            } catch (error) {
+                alert("Gagal menghubungi server untuk reconnect.");
+            }
+        }
+
+        async function logoutSession(sessionId) {
+            if (!confirm(`⚠️ PERHATIAN!\n\nApakah Anda yakin ingin LOGOUT sesi [${sessionId}]?\nIni akan mencabut akses WhatsApp secara permanen.`)) return;
+            try {
+                const res = await fetch(`${API_URL}/api/session/logout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                const json = await res.json();
+                alert(json.message);
+                fetchSessions();
+            } catch (error) {
+                alert("Gagal menghubungi server untuk logout.");
+            }
         }
 
         async function testSendMessage() {

@@ -238,6 +238,44 @@ app.post('/api/settings/auth', (req, res) => {
         res.status(500).json({ status: false, message: 'Gagal menyimpan konfigurasi.', error: error.message });
     }
 });
+// 7. Logout Sesi (Cabut Akses)
+app.post('/api/session/logout', async (req, res) => {
+    const { sessionId } = req.body;
+    if (!sessionId) return res.status(400).json({ status: false, message: 'Parameter sessionId wajib diisi' });
+
+    const session = sessions.get(sessionId);
+    if (!session) {
+        const sessionDir = path.join(SESSIONS_DIR, sessionId);
+        if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
+        return res.status(404).json({ status: false, message: 'Sesi tidak ditemukan' });
+    }
+
+    try {
+        if (session.sock) await session.sock.logout();
+        res.json({ status: true, message: `Berhasil logout sesi [${sessionId}].` });
+    } catch (e) {
+        sessions.delete(sessionId);
+        const sessionDir = path.join(SESSIONS_DIR, sessionId);
+        if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
+        res.json({ status: true, message: `Sesi [${sessionId}] dipaksa berhenti dan dihapus.` });
+    }
+});
+
+// 8. Reconnect Sesi (Mulai Ulang WS)
+app.post('/api/session/reconnect', (req, res) => {
+    const { sessionId } = req.body;
+    if (!sessionId) return res.status(400).json({ status: false, message: 'Parameter sessionId wajib diisi' });
+
+    const session = sessions.get(sessionId);
+    if (!session) return res.status(404).json({ status: false, message: 'Sesi tidak ditemukan' });
+
+    try {
+        if (session.sock && session.sock.ws) session.sock.ws.close();
+        res.json({ status: true, message: `Mencoba menghubungkan ulang sesi [${sessionId}]...` });
+    } catch (e) {
+        res.status(500).json({ status: false, message: 'Gagal menghubungkan ulang.', error: e.message });
+    }
+});
 
 const PORT = 3000;
 app.listen(PORT, () => {
