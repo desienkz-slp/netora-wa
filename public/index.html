@@ -625,13 +625,15 @@
                 const res = await fetch(`${API_URL}/api/sessions`);
                 const json = await res.json();
                 
-                const list = document.getElementById('sessionList');
-                const select = document.getElementById('sendSessionId');
-                list.innerHTML = '';
-                select.innerHTML = '<option value="">-- Pilih Sesi --</option>';
+                const sessionList = document.getElementById('sessionList');
+                const sendSessionSelect = document.getElementById('sendSessionId');
+                const currentSelectedSession = sendSessionSelect.value; // Simpan pilihan saat ini
+
+                sessionList.innerHTML = '';
+                sendSessionSelect.innerHTML = '<option value="">-- Pilih Sesi --</option>';
 
                 if (json.data.length === 0) {
-                    list.innerHTML = `<div style="text-align:center; color: var(--body); padding: 2rem;">Belum ada sesi/device yang terdaftar.</div>`;
+                    sessionList.innerHTML = `<div style="text-align:center; color: var(--body); padding: 2rem;">Belum ada sesi/device yang terdaftar.</div>`;
                     return;
                 }
 
@@ -647,7 +649,7 @@
                     }
 
                     // Render List
-                    list.innerHTML += `
+                    sessionList.innerHTML += `
                         <div class="session-item">
                             <div class="session-info">
                                 <h3>ID: ${session.sessionId}</h3>
@@ -664,9 +666,17 @@
 
                     // Render Select Option (only connected ones)
                     if (session.status === 'Connected') {
-                        select.innerHTML += `<option value="${session.sessionId}">${session.sessionId}</option>`;
+                        sendSessionSelect.innerHTML += `<option value="${session.sessionId}">${session.sessionId}</option>`;
                     }
                 });
+
+                // Kembalikan pilihan sebelumnya jika masih ada di daftar
+                if (currentSelectedSession) {
+                    const optionExists = Array.from(sendSessionSelect.options).some(opt => opt.value === currentSelectedSession);
+                    if (optionExists) {
+                        sendSessionSelect.value = currentSelectedSession;
+                    }
+                }
 
             } catch (error) {
                 console.error("Error fetching sessions:", error);
@@ -923,7 +933,9 @@
                 phone = document.getElementById('sendGroup').value;
             }
 
-            if (!sessionId || !phone || !message) return showToast("Harap lengkapi form pengiriman pesan!", "warning");
+            if (!sessionId) return showToast("Sesi (Pengirim) tidak boleh kosong. Pastikan ada device yang Connected.", "warning");
+            if (!phone) return showToast(targetType === 'number' ? "Nomor WA tujuan tidak boleh kosong!" : "Pilih Grup WA tujuan terlebih dahulu!", "warning");
+            if (!message) return showToast("Pesan tidak boleh kosong!", "warning");
 
             try {
                 const res = await fetch(`${API_URL}/api/send`, {
