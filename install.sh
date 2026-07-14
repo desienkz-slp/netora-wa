@@ -16,6 +16,7 @@ cd "$(dirname "$0")" || exit
 
 echo "[1/4] Memperbarui Repository OS..."
 apt-get update -y
+apt-get install -y curl
 
 echo "[2/4] Instalasi Node.js (versi 20 LTS)..."
 # Setup repo nodejs
