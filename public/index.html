@@ -244,10 +244,6 @@
                         <option value="">-- Pilih Grup --</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Isi Pesan</label>
-                    <textarea id="sendMessage" class="form-control" rows="8">NETORA WA GATEWAY</textarea>
-                </div>
                 <button class="btn" style="background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="testSendMessage()">TEST</button>
             </div>
         </div>
@@ -656,7 +652,7 @@
 
         async function testSendMessage() {
             const sessionId = document.getElementById('sendSessionId').value;
-            const message = document.getElementById('sendMessage').value;
+            const message = "NETORA WA GATEWAY";
             
             const targetType = document.querySelector('input[name="targetType"]:checked').value;
             let phone = '';
