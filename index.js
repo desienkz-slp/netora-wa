@@ -21,8 +21,8 @@ const CONFIG_FILE = path.join(__dirname, 'config.json');
 
 app.use(['/api', '/send'], (req, res, next) => {
     // Baca kredensial langsung dari file config
-    let AUTH_USER = 'admin';
-    let AUTH_PASS = 'password123';
+    let AUTH_USER = 'superadmin';
+    let AUTH_PASS = 'admin123';
     try {
         if (fs.existsSync(CONFIG_FILE)) {
             const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
