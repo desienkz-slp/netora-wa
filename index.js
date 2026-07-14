@@ -197,8 +197,10 @@ app.post('/api/send', async (req, res) => {
 
     try {
         let formattedPhone = phone;
-        if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.slice(1);
-        formattedPhone = formattedPhone + '@s.whatsapp.net';
+        if (!formattedPhone.endsWith('@g.us')) {
+            if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.slice(1);
+            if (!formattedPhone.endsWith('@s.whatsapp.net')) formattedPhone = formattedPhone + '@s.whatsapp.net';
+        }
 
         // Kirim lewat socket spesifik
         await session.sock.sendMessage(formattedPhone, { text: message });
@@ -207,6 +209,24 @@ app.post('/api/send', async (req, res) => {
     } catch (error) {
         console.error(`Error send via [${sessionId}]:`, error);
         res.status(500).json({ status: false, message: 'Gagal mengirim pesan.', error: error.message });
+    }
+});
+
+// 4.5 Ambil Data Grup dari Device
+app.get('/api/groups', async (req, res) => {
+    const { sessionId } = req.query;
+    if (!sessionId) return res.status(400).json({ status: false, message: 'Parameter ?sessionId= wajib disematkan' });
+
+    const session = sessions.get(sessionId);
+    if (!session || !session.connected) return res.status(503).json({ status: false, message: 'Device belum terkoneksi.' });
+
+    try {
+        const groups = await session.sock.groupFetchAllParticipating();
+        const groupList = Object.values(groups).map(g => ({ id: g.id, name: g.subject }));
+        res.json({ status: true, data: groupList });
+    } catch (error) {
+        console.error('Error fetching groups:', error);
+        res.status(500).json({ status: false, message: 'Gagal mengambil data grup.', error: error.message });
     }
 });
 

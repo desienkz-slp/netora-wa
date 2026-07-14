@@ -224,14 +224,31 @@
                     <select id="sendSessionId" class="form-control"></select>
                 </div>
                 <div class="form-group">
+                    <label style="margin-bottom: 0.8rem;">Tipe Target</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="targetType" value="number" checked onchange="toggleTargetInput()"> Nomor WA
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="targetType" value="group" onchange="toggleTargetInput()"> Grup WA
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" id="targetNumberContainer">
                     <label>Nomor HP Tujuan (08x/62x)</label>
                     <input type="text" id="sendPhone" class="form-control" placeholder="08123456789">
                 </div>
+                <div class="form-group" id="targetGroupContainer" style="display: none;">
+                    <label>Pilih Grup WA <span id="groupLoadingText" style="color: var(--primary); font-size: 0.8rem; display: none;">(Mengambil data grup...)</span></label>
+                    <select id="sendGroup" class="form-control">
+                        <option value="">-- Pilih Grup --</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Isi Pesan</label>
-                    <textarea id="sendMessage" class="form-control" rows="8" placeholder="Ketik pesan Anda di sini..."></textarea>
+                    <textarea id="sendMessage" class="form-control" rows="8">NETORA WA GATEWAY</textarea>
                 </div>
-                <button class="btn" style="background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="testSendMessage()">Kirim Pesan</button>
+                <button class="btn" style="background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="testSendMessage()">TEST</button>
             </div>
         </div>
 
@@ -591,12 +608,66 @@
             }
         }
 
+        async function loadGroups(sessionId) {
+            const selectGroup = document.getElementById('sendGroup');
+            const loadingText = document.getElementById('groupLoadingText');
+            selectGroup.innerHTML = '<option value="">-- Pilih Grup --</option>';
+            if (!sessionId) return;
+
+            loadingText.style.display = 'inline-block';
+            try {
+                const res = await fetch(`${API_URL}/api/groups?sessionId=${sessionId}`);
+                const json = await res.json();
+                if (json.status && json.data) {
+                    json.data.forEach(group => {
+                        selectGroup.innerHTML += `<option value="${group.id}">${group.name}</option>`;
+                    });
+                } else {
+                    showToast(json.message || "Gagal mengambil daftar grup", "error");
+                }
+            } catch (error) {
+                showToast("Gagal menghubungi server untuk mengambil grup", "error");
+            } finally {
+                loadingText.style.display = 'none';
+            }
+        }
+
+        function toggleTargetInput() {
+            const type = document.querySelector('input[name="targetType"]:checked').value;
+            const sessionId = document.getElementById('sendSessionId').value;
+            
+            if (type === 'group') {
+                document.getElementById('targetNumberContainer').style.display = 'none';
+                document.getElementById('targetGroupContainer').style.display = 'block';
+                loadGroups(sessionId);
+            } else {
+                document.getElementById('targetNumberContainer').style.display = 'block';
+                document.getElementById('targetGroupContainer').style.display = 'none';
+            }
+        }
+
+        // Trigger reload groups if session changes and group mode is active
+        document.getElementById('sendSessionId').addEventListener('change', () => {
+            const type = document.querySelector('input[name="targetType"]:checked').value;
+            if (type === 'group') {
+                loadGroups(document.getElementById('sendSessionId').value);
+            }
+        });
+
         async function testSendMessage() {
             const sessionId = document.getElementById('sendSessionId').value;
-            const phone = document.getElementById('sendPhone').value;
             const message = document.getElementById('sendMessage').value;
+            
+            const targetType = document.querySelector('input[name="targetType"]:checked').value;
+            let phone = '';
+            
+            if (targetType === 'number') {
+                phone = document.getElementById('sendPhone').value.trim();
+            } else {
+                phone = document.getElementById('sendGroup').value;
+            }
 
-            if (!sessionId || !phone || !message) return showToast("Harap lengkapi form pengiriman pesan!");
+            if (!sessionId || !phone || !message) return showToast("Harap lengkapi form pengiriman pesan!", "warning");
 
             try {
                 const res = await fetch(`${API_URL}/api/send`, {
@@ -605,13 +676,13 @@
                     body: JSON.stringify({ sessionId, phone, message })
                 });
                 const json = await res.json();
-                showToast(json.message);
+                showToast(json.message, json.status ? "success" : "error");
                 if(json.status) {
-                    document.getElementById('sendPhone').value = '';
-                    document.getElementById('sendMessage').value = '';
+                    // Do not clear the textarea message as requested (keep template)
+                    if (targetType === 'number') document.getElementById('sendPhone').value = '';
                 }
             } catch (error) {
-                showToast("Gagal mengirim pesan");
+                showToast("Gagal mengirim pesan", "error");
             }
         }
 
