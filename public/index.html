@@ -369,6 +369,39 @@
             </div>
         </div>
 
+        <!-- API Documentation -->
+        <div class="card">
+            <h2>📚 Dokumentasi API (Kirim Pesan)</h2>
+            <p style="color: var(--body); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">
+                Gunakan format POST request untuk mengirim pesan lewat aplikasi eksternal (MikroTik/Laravel). Wajib menyertakan <b>Basic Auth</b> di pengaturan <i>request</i> Anda.
+            </p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--ink-strong);">Kirim Pesan ke Nomor Personal</h3>
+                <div style="background: var(--canvas); padding: 1rem; border: 1px solid var(--hairline); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--body); overflow-x: auto; line-height: 1.6;">
+                    <strong>Endpoint :</strong> POST /api/send<br>
+                    <strong>Parameter:</strong><br>
+                    - <code>sessionId</code> : <em>(contoh: kasir-01)</em><br>
+                    - <code>phone</code> &nbsp;&nbsp;&nbsp;&nbsp;: <em>(contoh: 08123456789 atau 628123456789)</em><br>
+                    - <code>message</code> &nbsp;&nbsp;: <em>(Isi pesan Anda)</em>
+                </div>
+            </div>
+
+            <div>
+                <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--ink-strong);">Kirim Pesan ke Grup WA</h3>
+                <div style="background: var(--canvas); padding: 1rem; border: 1px solid var(--hairline); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--body); overflow-x: auto; line-height: 1.6;">
+                    <strong>Endpoint :</strong> POST /api/send<br>
+                    <strong>Parameter:</strong><br>
+                    - <code>sessionId</code> : <em>(contoh: kasir-01)</em><br>
+                    - <code>phone</code> &nbsp;&nbsp;&nbsp;&nbsp;: <strong>[ID_Grup]@g.us</strong> <em>(contoh: 120363123456789@g.us)</em><br>
+                    - <code>message</code> &nbsp;&nbsp;: <em>(Isi pesan grup)</em>
+                </div>
+                <p style="color: var(--primary); font-size: 0.8rem; margin-top: 0.75rem;">
+                    * <strong>Tips:</strong> Untuk mengetahui ID Grup, gunakan fitur "Uji Kirim Pesan" di atas. Pilih "Grup WA" dan ID Grup akan muncul di sebelah nama grup pada dropdown.
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <!-- Settings Modal -->
