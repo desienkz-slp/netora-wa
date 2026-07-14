@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
 
@@ -59,9 +59,11 @@ async function initSession(sessionId) {
     
     // Inisialisasi state dari file auth spesifik folder sessionId
     const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    const { version } = await fetchLatestBaileysVersion();
 
     // Bikin socket
     const sock = makeWASocket({
+        version,
         auth: state,
         browser: Browsers.macOS('Desktop'),
         logger: pino({ level: 'error' })
