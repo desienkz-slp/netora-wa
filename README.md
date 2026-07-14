@@ -10,36 +10,46 @@ Aplikasi Multi-Device WhatsApp Gateway berbasis [Baileys](https://github.com/Whi
 - **Panic Button**: Script `reset.sh` siap sedia (via SSH) jika Anda lupa password.
 
 ## 🔧 Panduan Instalasi di Fresh Server (VPS)
-1. Clone repositori ini di dalam VPS Anda:
+Ikuti langkah-langkah di bawah ini untuk menginstal aplikasi di server VPS baru Anda (Direkomendasikan Ubuntu 22.04 / 24.04):
+
+1. **Unduh (Clone) Repositori:**
+   Buka terminal VPS Anda lalu ketik:
    ```bash
-   git clone <URL_REPO_GITHUB_ANDA>
-   ```
-2. Masuk ke direktori aplikasi:
-   ```bash
+   git clone https://github.com/desienkz-slp/netora-wa.git
    cd netora-wa
    ```
-3. Jalankan script instalasi otomatis (membutuhkan akses root/sudo):
+
+2. **Jalankan Instalasi Otomatis:**
+   Script ini akan menginstal Node.js versi terbaru, PM2, dan seluruh library yang dibutuhkan:
    ```bash
    sudo bash install.sh
    ```
 
-## 💻 Penggunaan (Lokal/Manual)
-1. Instal dependensi: `npm install`
-2. Jalankan aplikasi: `node index.js` atau `npm start`
-3. Buka browser: `http://localhost:3000` 
-   *(Secara default, kredensial login adalah `admin` / `password123`. Harap ubah melalui Dashboard UI).*
+3. **Jalankan Aplikasi secara Permanen (PM2):**
+   Agar aplikasi WA Gateway ini menyala nonstop 24 jam meskipun Anda menutup aplikasi PuTTY/Terminal SSH, jalankan perintah ini:
+   ```bash
+   pm2 start index.js --name "netora-wa"
+   pm2 save
+   ```
+   *(Opsional: ketik `pm2 startup` agar aplikasi otomatis menyala saat VPS direstart).*
+
+4. **Buka Dashboard UI:**
+   Akses aplikasi lewat browser menggunakan IP Server Anda di Port 3000:
+   👉 **`http://IP_VPS_ANDA:3000`**
+   - **Username Default:** `admin`
+   - **Password Default:** `password123`
+   *(Ubah segera di halaman Dashboard).*
 
 ## 📡 API Endpoint (Untuk Integrasi ke Laravel)
+*(Seluruh API diproteksi menggunakan Basic Auth. Tambahkan Header `Authorization: Basic <base64(user:pass)>` saat memanggil dari Laravel).*
 
-Seluruh API diproteksi menggunakan **Basic Auth**. Anda wajib menambahkan Header `Authorization: Basic <base64(user:pass)>` di Guzzle/cURL setiap kali memanggil API ini dari aplikasi Laravel NETORA Billing.
-
-| Method | Endpoint | Keterangan |
+| Method | Endpoint | Parameter / Keterangan |
 | :--- | :--- | :--- |
-| `POST` | `/api/session/start` | Menginisialisasi koneksi Device baru. Parameter Body: `{ "sessionId": "cabang_a" }` |
-| `GET` | `/api/qr?sessionId=...` | Mengambil QR Code mentah/base64 dari device tertentu. |
-| `GET` | `/api/status?sessionId=...` | Mengecek status koneksi (`Connected` / `Disconnected`). |
-| `POST` | `/api/send` | Mengirim pesan. Body: `{ "sessionId": "cabang_a", "phone": "08...", "message": "Isi pesan" }` |
-| `GET` | `/api/sessions` | Menampilkan seluruh sesi aktif. |
+| `POST` | `/api/session/start` | Body: `{ "sessionId": "cabang_a" }` |
+| `GET` | `/api/qr?sessionId=...` | Menampilkan QR Code (Base64) |
+| `GET` | `/api/status?sessionId=...` | Mengecek status koneksi (Connected/Disconnected) |
+| `POST` | `/api/send` | Body: `{ "sessionId": "cabang_a", "phone": "08xxx", "message": "Isi pesan" }` |
+| `GET` | `/api/sessions` | Menampilkan semua device aktif |
 
 ---
 **Developer:** upluk-upluk_dev
