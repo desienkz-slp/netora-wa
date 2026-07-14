@@ -332,8 +332,10 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
 
         async function startSession() {
             const input = document.getElementById('newSessionId');
-            const sessionId = input.value.trim();
-            if (!sessionId) return alert("ID Sesi tidak boleh kosong!");
+            let sessionId = input.value.trim();
+            if (!sessionId) {
+                sessionId = 'device_' + Math.floor(Date.now() / 1000);
+            }
 
             try {
                 const res = await fetch(`${API_URL}/api/session/start`, {
