@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
 
@@ -63,7 +63,7 @@ async function initSession(sessionId) {
     // Bikin socket
     const sock = makeWASocket({
         auth: state,
-        browser: ["NETORA", "Chrome", "20.0.04"],
+        browser: Browsers.macOS('Desktop'),
         logger: pino({ level: 'error' })
     });
 
