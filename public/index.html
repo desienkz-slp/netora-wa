@@ -323,6 +323,7 @@
                     <input type="text" id="newSessionId" class="form-control" placeholder="Ketik nama device...">
                 </div>
                 <button class="btn" onclick="startSession()">Create & Munculkan QR</button>
+                <p id="sessionErrorText" style="color: var(--primary-soft); font-size: 0.85rem; margin-top: 0.75rem; display: none;"></p>
             </div>
 
             <div class="card">
@@ -636,6 +637,9 @@
 
         async function startSession() {
             const input = document.getElementById('newSessionId');
+            const errText = document.getElementById('sessionErrorText');
+            errText.style.display = 'none';
+
             let sessionId = input.value.trim();
             if (!sessionId) {
                 sessionId = 'device-' + Math.floor(Date.now() / 1000);
@@ -643,7 +647,8 @@
 
             const regex = /^[a-z0-9\-]+$/;
             if (!regex.test(sessionId)) {
-                showToast("Sesi ID hanya boleh berisi huruf kecil, angka, dan tanda strip (-). Tanpa spasi.", "toast-error");
+                errText.innerText = 'Sesi ID hanya boleh berisi huruf kecil, angka, dan tanda strip (-). Tanpa spasi.';
+                errText.style.display = 'block';
                 return;
             }
 
@@ -654,6 +659,13 @@
                     body: JSON.stringify({ sessionId })
                 });
                 const json = await res.json();
+                
+                if (!json.status && json.message.includes("huruf kecil")) {
+                    errText.innerText = json.message;
+                    errText.style.display = 'block';
+                    return;
+                }
+                
                 showToast(json.message);
                 if (json.status) {
                     input.value = '';
