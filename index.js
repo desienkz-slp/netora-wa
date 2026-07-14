@@ -242,10 +242,19 @@ app.get('/api/groups', async (req, res) => {
 app.get('/api/sessions', (req, res) => {
     const allSessions = [];
     sessions.forEach((session, sessionId) => {
+        let phone = null;
+        let name = null;
+        if (session.sock && session.sock.user) {
+            // sock.user.id format: "62812345678:12@s.whatsapp.net"
+            phone = session.sock.user.id.split(':')[0].split('@')[0];
+            name = session.sock.user.name || null;
+        }
         allSessions.push({
             sessionId: sessionId,
             status: session.connected ? 'Connected' : 'Disconnected',
-            hasQr: !!session.qr
+            hasQr: !!session.qr,
+            phone: phone,
+            name: name
         });
     });
     res.json({ status: true, data: allSessions });
