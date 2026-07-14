@@ -917,6 +917,7 @@
                 const res = await fetch(`${API_URL}/api/groups?sessionId=${sessionId}`);
                 const json = await res.json();
                 if (json.status && json.data) {
+                    json.data.sort((a, b) => a.name.localeCompare(b.name, 'id'));
                     json.data.forEach(group => {
                         const groupIdShort = group.id.split('@')[0];
                         selectGroup.innerHTML += `<option value="${group.id}">${group.name} (ID: ${groupIdShort})</option>`;
