@@ -155,17 +155,18 @@
         .form-control:focus { border: 1px solid var(--primary-soft); }
 
         /* TomSelect Dark Theme Override */
-        .ts-control, .ts-wrapper.single.input-active .ts-control {
-            background: var(--canvas-soft);
-            border: 1px solid var(--hairline);
-            color: var(--ink);
-            border-radius: 6px;
-            padding: 0.75rem 1rem;
+        .ts-wrapper.single .ts-control, .ts-wrapper.single.input-active .ts-control {
+            background: var(--canvas-soft) !important;
+            border: 1px solid var(--hairline) !important;
+            color: var(--ink) !important;
+            border-radius: 6px !important;
+            padding: 0.75rem 1rem !important;
         }
         .ts-control > input { color: var(--ink) !important; }
+        .ts-control input::placeholder { color: var(--body) !important; opacity: 0.7; }
         .ts-dropdown, .ts-control, .ts-wrapper.single.input-active .ts-control {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.875rem !important;
         }
         .ts-dropdown {
             background: var(--canvas-soft);
