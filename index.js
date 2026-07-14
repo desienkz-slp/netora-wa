@@ -191,8 +191,8 @@ app.get('/api/qr', (req, res) => {
 app.post(['/api/send', '/send/message'], async (req, res) => {
     // Dukung parameter dari body maupun query string (kompatibilitas MikroTik lama)
     const sessionId = req.body.sessionId || req.query.sessionId || req.query.device_id;
-    const phone = req.body.phone;
-    const message = req.body.message;
+    const phone = req.body.phone || req.query.phone;
+    const message = req.body.message || req.query.message;
 
     if (!sessionId || !phone || !message) {
         return res.status(400).json({ status: false, message: 'Parameter sessionId/device_id, phone, dan message wajib diisi!' });
