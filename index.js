@@ -9,6 +9,7 @@ const qrcode = require('qrcode-terminal');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files untuk UI Dashboard
 app.use(express.static(path.join(__dirname, 'public')));
@@ -18,7 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ==========================================
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 
-app.use('/api', (req, res, next) => {
+app.use(['/api', '/send'], (req, res, next) => {
     // Baca kredensial langsung dari file config
     let AUTH_USER = 'admin';
     let AUTH_PASS = 'password123';
@@ -181,12 +182,15 @@ app.get('/api/qr', (req, res) => {
     }
 });
 
-// 4. Kirim Pesan Multi-Device
-app.post('/api/send', async (req, res) => {
-    const { sessionId, phone, message } = req.body;
+// 4. Kirim Pesan Multi-Device (Mendukung JSON dan URL-Encoded)
+app.post(['/api/send', '/send/message'], async (req, res) => {
+    // Dukung parameter dari body maupun query string (kompatibilitas MikroTik lama)
+    const sessionId = req.body.sessionId || req.query.sessionId || req.query.device_id;
+    const phone = req.body.phone;
+    const message = req.body.message;
 
     if (!sessionId || !phone || !message) {
-        return res.status(400).json({ status: false, message: 'Parameter sessionId, phone, dan message wajib diisi!' });
+        return res.status(400).json({ status: false, message: 'Parameter sessionId/device_id, phone, dan message wajib diisi!' });
     }
 
     const session = sessions.get(sessionId);
