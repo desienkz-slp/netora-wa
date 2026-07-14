@@ -277,6 +277,28 @@ app.post('/api/session/reconnect', (req, res) => {
     }
 });
 
+// 9. Delete Sesi (Hapus Paksa)
+app.post('/api/session/delete', (req, res) => {
+    const { sessionId } = req.body;
+    if (!sessionId) return res.status(400).json({ status: false, message: 'Parameter sessionId wajib diisi' });
+
+    try {
+        const session = sessions.get(sessionId);
+        if (session && session.sock) {
+            session.sock.ev.removeAllListeners('connection.update');
+            if(session.sock.ws) session.sock.ws.close();
+        }
+        
+        sessions.delete(sessionId);
+        const sessionDir = path.join(SESSIONS_DIR, sessionId);
+        if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
+
+        res.json({ status: true, message: `Sesi [${sessionId}] berhasil dihapus permanen.` });
+    } catch (e) {
+        res.status(500).json({ status: false, message: 'Gagal menghapus sesi.', error: e.message });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`🚀 WA Gateway (Multi-Device) berjalan di http://localhost:${PORT}`);

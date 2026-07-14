@@ -305,6 +305,7 @@
                                 ${session.status !== 'Connected' ? `<button class="btn-sm" style="background:#3b82f6;" onclick="showQr('${session.sessionId}')">Lihat QR</button>` : ''}
                                 <button class="btn-sm" style="background:var(--warning);" onclick="reconnectSession('${session.sessionId}')">Reconnect</button>
                                 <button class="btn-sm" style="background:var(--danger);" onclick="logoutSession('${session.sessionId}')">Logout</button>
+                                <button class="btn-sm" style="background:#475569;" onclick="deleteSession('${session.sessionId}')">Delete</button>
                             </div>
                         </div>
                     `;
@@ -471,6 +472,22 @@
                 fetchSessions();
             } catch (error) {
                 alert("Gagal menghubungi server untuk logout.");
+            }
+        }
+
+        async function deleteSession(sessionId) {
+            if (!confirm(`Hapus paksa sesi [${sessionId}] dari memori dan dashboard?\nGunakan ini jika device nyangkut/error.`)) return;
+            try {
+                const res = await fetch(`${API_URL}/api/session/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                const json = await res.json();
+                alert(json.message);
+                fetchSessions();
+            } catch (error) {
+                alert("Gagal menghubungi server untuk menghapus sesi.");
             }
         }
 
