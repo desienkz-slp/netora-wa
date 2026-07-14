@@ -136,6 +136,11 @@ app.post('/api/session/start', (req, res) => {
         return res.status(400).json({ status: false, message: 'Parameter sessionId wajib diisi' });
     }
 
+    const regex = /^[a-z0-9\-]+$/;
+    if (!regex.test(sessionId)) {
+        return res.status(400).json({ status: false, message: 'Sesi ID hanya boleh berisi huruf kecil, angka, dan tanda strip (-).' });
+    }
+
     if (sessions.has(sessionId)) {
         return res.status(400).json({ status: false, message: `Sesi ${sessionId} sudah aktif atau dalam proses.` });
     }

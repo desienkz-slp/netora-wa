@@ -638,7 +638,13 @@
             const input = document.getElementById('newSessionId');
             let sessionId = input.value.trim();
             if (!sessionId) {
-                sessionId = 'device_' + Math.floor(Date.now() / 1000);
+                sessionId = 'device-' + Math.floor(Date.now() / 1000);
+            }
+
+            const regex = /^[a-z0-9\-]+$/;
+            if (!regex.test(sessionId)) {
+                showToast("Sesi ID hanya boleh berisi huruf kecil, angka, dan tanda strip (-). Tanpa spasi.", "toast-error");
+                return;
             }
 
             try {
