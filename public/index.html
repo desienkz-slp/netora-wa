@@ -374,13 +374,22 @@
 
         <!-- Session List -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2>Daftar Sesi (Device Aktif)</h2>
-                <button class="btn-sm" onclick="fetchSessions()">🔄 Refresh</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <h2 style="margin: 0;">Daftar Sesi (Device Aktif)</h2>
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; max-width: 400px; justify-content: flex-end;">
+                    <input type="text" id="searchInput" class="form-control" style="padding: 0.5rem; font-size: 0.85rem;" placeholder="Cari ID/Nomor..." oninput="handleSearch()">
+                    <button class="btn-sm" onclick="fetchSessions()">🔄 Refresh</button>
+                </div>
             </div>
             
             <div class="session-list" id="sessionList">
                 <div style="text-align:center; color: var(--body); padding: 2rem;">Loading data...</div>
+            </div>
+
+            <div id="paginationControls" style="display: none; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn-sm" id="btnPrevPage" onclick="changePage(-1)">Sebelumnya</button>
+                <span id="pageInfo" style="font-size: 0.875rem; color: var(--body);">Halaman 1 / 1</span>
+                <button class="btn-sm" id="btnNextPage" onclick="changePage(1)">Selanjutnya</button>
             </div>
         </div>
 
@@ -656,72 +665,117 @@
             });
         }
 
+        let sessionsData = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let searchQuery = '';
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            currentPage = 1;
+            renderSessions();
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            renderSessions();
+        }
+
+        function renderSessions() {
+            const sessionList = document.getElementById('sessionList');
+            const paginationControls = document.getElementById('paginationControls');
+            sessionList.innerHTML = '';
+
+            const filtered = sessionsData.filter(session => {
+                const idMatch = session.sessionId.toLowerCase().includes(searchQuery);
+                const phoneMatch = session.phone && session.phone.toLowerCase().includes(searchQuery);
+                const nameMatch = session.name && session.name.toLowerCase().includes(searchQuery);
+                return idMatch || phoneMatch || nameMatch;
+            });
+
+            if (filtered.length === 0) {
+                if (searchQuery) {
+                    sessionList.innerHTML = `<div style="text-align:center; color: var(--body); padding: 2rem;">Tidak ada device yang cocok dengan pencarian.</div>`;
+                } else {
+                    sessionList.innerHTML = `<div style="text-align:center; color: var(--body); padding: 2rem;">Belum ada sesi/device yang terdaftar.</div>`;
+                }
+                paginationControls.style.display = 'none';
+                return;
+            }
+
+            const totalPages = Math.ceil(filtered.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+            paginated.forEach(session => {
+                let badgeClass = 'status-disconnected';
+                let statusText = session.status;
+                if (session.status === 'Connected') badgeClass = 'status-connected';
+                else if (session.hasQr) { badgeClass = 'status-waiting'; statusText = 'Menunggu Scan QR'; }
+
+                let profileInfo = '';
+                if (session.phone) {
+                    profileInfo = `<div style="font-size: 0.85rem; color: var(--body); margin-top: 0.5rem;">
+                        <span>📱 ${session.phone}</span> ${session.name ? `<span style="opacity: 0.7;">• ${session.name}</span>` : ''}
+                    </div>`;
+                }
+
+                sessionList.innerHTML += `
+                    <div class="session-item">
+                        <div class="session-info">
+                            <h3>ID: ${session.sessionId}</h3>
+                            <div><span class="status-badge ${badgeClass}">${statusText}</span></div>
+                            ${profileInfo}
+                        </div>
+                        <div class="action-btns">
+                            ${session.status !== 'Connected' ? `<button class="btn-sm" style="background:#3b82f6;" onclick="showQr('${session.sessionId}')">Lihat QR</button>` : ''}
+                            <button class="btn-sm" style="background:var(--warning);" onclick="reconnectSession('${session.sessionId}')">Reconnect</button>
+                            <button class="btn-sm btn-destructive" onclick="logoutSession('${session.sessionId}')">Logout</button>
+                            <button class="btn-sm" style="background:#475569;" onclick="deleteSession('${session.sessionId}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (totalPages > 1) {
+                paginationControls.style.display = 'flex';
+                document.getElementById('pageInfo').innerText = `Halaman ${currentPage} dari ${totalPages}`;
+                const btnPrev = document.getElementById('btnPrevPage');
+                const btnNext = document.getElementById('btnNextPage');
+                btnPrev.disabled = currentPage === 1;
+                btnPrev.style.opacity = currentPage === 1 ? '0.5' : '1';
+                btnNext.disabled = currentPage === totalPages;
+                btnNext.style.opacity = currentPage === totalPages ? '0.5' : '1';
+            } else {
+                paginationControls.style.display = 'none';
+            }
+        }
+
         async function fetchSessions() {
             try {
                 const res = await fetch(`${API_URL}/api/sessions`);
                 const json = await res.json();
                 
-                const sessionList = document.getElementById('sessionList');
-                const sendSessionSelect = document.getElementById('sendSessionId');
-                const currentSelectedSession = sendSessionSelect.value; // Simpan pilihan saat ini
+                sessionsData = json.data || [];
+                renderSessions();
 
-                sessionList.innerHTML = '';
+                const sendSessionSelect = document.getElementById('sendSessionId');
+                const currentSelectedSession = sendSessionSelect.value;
                 sendSessionSelect.innerHTML = '<option value="">-- Pilih Sesi --</option>';
 
-                if (json.data.length === 0) {
-                    sessionList.innerHTML = `<div style="text-align:center; color: var(--body); padding: 2rem;">Belum ada sesi/device yang terdaftar.</div>`;
-                    return;
-                }
-
-                json.data.forEach(session => {
-                    // Badge Logic
-                    let badgeClass = 'status-disconnected';
-                    let statusText = session.status;
-
-                    if (session.status === 'Connected') badgeClass = 'status-connected';
-                    else if (session.hasQr) {
-                        badgeClass = 'status-waiting';
-                        statusText = 'Menunggu Scan QR';
-                    }
-
-                    let profileInfo = '';
-                    if (session.phone) {
-                        profileInfo = `<div style="font-size: 0.85rem; color: var(--body); margin-top: 0.5rem;">
-                            <span>📱 ${session.phone}</span> ${session.name ? `<span style="opacity: 0.7;">• ${session.name}</span>` : ''}
-                        </div>`;
-                    }
-
-                    // Render List
-                    sessionList.innerHTML += `
-                        <div class="session-item">
-                            <div class="session-info">
-                                <h3>ID: ${session.sessionId}</h3>
-                                <div><span class="status-badge ${badgeClass}">${statusText}</span></div>
-                                ${profileInfo}
-                            </div>
-                            <div class="action-btns">
-                                ${session.status !== 'Connected' ? `<button class="btn-sm" style="background:#3b82f6;" onclick="showQr('${session.sessionId}')">Lihat QR</button>` : ''}
-                                <button class="btn-sm" style="background:var(--warning);" onclick="reconnectSession('${session.sessionId}')">Reconnect</button>
-                                <button class="btn-sm btn-destructive" onclick="logoutSession('${session.sessionId}')">Logout</button>
-                                <button class="btn-sm" style="background:#475569;" onclick="deleteSession('${session.sessionId}')">Delete</button>
-                            </div>
-                        </div>
-                    `;
-
-                    // Render Select Option (only connected ones)
+                sessionsData.forEach(session => {
                     if (session.status === 'Connected') {
                         sendSessionSelect.innerHTML += `<option value="${session.sessionId}">${session.sessionId}</option>`;
                     }
                 });
 
-                // Kembalikan pilihan sebelumnya jika masih ada di daftar
                 if (currentSelectedSession) {
                     const optionExists = Array.from(sendSessionSelect.options).some(opt => opt.value === currentSelectedSession);
-                    if (optionExists) {
-                        sendSessionSelect.value = currentSelectedSession;
-                    }
+                    if (optionExists) sendSessionSelect.value = currentSelectedSession;
                 }
-
             } catch (error) {
                 console.error("Error fetching sessions:", error);
             }
