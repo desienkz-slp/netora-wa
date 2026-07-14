@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NETORA WA Gateway - Dashboard</title>
+    <link rel="icon" type="image/png" href="NETORA-LOGO.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -43,6 +44,12 @@
             position: sticky;
             top: 0;
             z-index: 40;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
         .navbar-brand h1 {
@@ -244,6 +251,7 @@
 
     <nav class="navbar">
         <div class="navbar-brand">
+            <img src="NETORA-LOGO.png" alt="NETORA Logo" style="height: 32px; width: auto; object-fit: contain;">
             <h1>NETORA WA Gateway</h1>
         </div>
         <div class="navbar-actions">
