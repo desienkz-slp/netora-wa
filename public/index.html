@@ -454,6 +454,17 @@
                     * <strong>Tips:</strong> Untuk mengetahui ID Grup, gunakan fitur "Uji Kirim Pesan" di atas. Pilih "Grup WA" dan ID Grup akan muncul di sebelah nama grup pada dropdown.
                 </p>
             </div>
+
+            <div style="margin-top: 1.5rem;">
+                <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--ink-strong);">Contoh Implementasi di MikroTik (RouterOS Script)</h3>
+                <div style="background: var(--canvas); padding: 1rem; border: 1px solid var(--hairline); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--body); overflow-x: auto; line-height: 1.6; white-space: pre;">/tool fetch url="$url/send/message?device_id=$deviceid" \
+  user="$userauth" \
+  password="$passauth" \
+  http-method=post \
+  http-header-field="Content-Type: application/x-www-form-urlencoded" \
+  http-data="phone=$nomor&message=$message" \
+  keep-result=no</div>
+            </div>
         </div>
 
     </div> <!-- End App Section -->
