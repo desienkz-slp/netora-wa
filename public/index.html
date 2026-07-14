@@ -283,6 +283,10 @@
 </head>
 <body>
 
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+
     <!-- Login Section -->
     <div id="loginSection" style="display: none; width: 100%; min-height: 100vh; justify-content: center; align-items: center; background: var(--canvas);">
         <div class="card" style="width: 90%; max-width: 400px; text-align: center; padding: 3rem 2rem;">
@@ -410,7 +414,7 @@
             </div>
         </div>
 
-    </div>
+    </div> <!-- End App Section -->
 
     <!-- Settings Modal -->
     <div class="modal-overlay" id="settingsModal">
@@ -458,10 +462,6 @@
         </div>
     </div>
 
-    </div> <!-- End App Section -->
-
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
 
     <script>
         const API_URL = ''; // Gunakan relative path karena di-serve dari port yg sama
