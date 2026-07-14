@@ -10,12 +10,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files untuk UI Dashboard
+app.use(express.static(path.join(__dirname, 'public')));
+
 // ==========================================
 // --- BASIC AUTHENTICATION MIDDLEWARE ---
 // ==========================================
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 
-app.use((req, res, next) => {
+app.use('/api', (req, res, next) => {
     // Baca kredensial langsung dari file config
     let AUTH_USER = 'admin';
     let AUTH_PASS = 'password123';
@@ -36,13 +39,9 @@ app.use((req, res, next) => {
         return next();
     }
 
-    // Jika gagal, tampilkan Pop-Up Login bawaan browser
-    res.set('WWW-Authenticate', 'Basic realm="NETORA WA Gateway Secure Area"');
-    res.status(401).send('Akses Ditolak. Authentication required.');
+    // Jika gagal, kembalikan 401 tanpa WWW-Authenticate untuk mencegah popup browser bawaan
+    res.status(401).json({ error: 'Akses Ditolak. Authentication required.' });
 });
-
-// Serve static files untuk UI Dashboard
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Tempat menyimpan data semua sesi aktif di memori
 const sessions = new Map();

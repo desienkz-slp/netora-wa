@@ -5,38 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NETORA WA Gateway - Dashboard</title>
     <link rel="icon" type="image/png" href="NETORA-LOGO.png">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --success: #10b981;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --primary: #2563EB;
+            --primary-hover: #1D4ED8;
+            --secondary: #7C3AED;
+            --tertiary: #6B7280;
+            --bg-color: #FAFAFA;
+            --surface: #FFFFFF;
+            --success: #16A34A;
+            --warning: #CA8A04;
+            --error: #DC2626;
+            --text-main: #18181B;
+            --text-muted: #52525B;
+            
+            --border-light: #F4F4F5;
+            --border-input: #E4E4E7;
+            
+            --shadow-subtle: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-medium: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-large: 0 12px 32px rgba(0,0,0,0.1);
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
         body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at top right, #1e293b, var(--bg-color));
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            line-height: 1.7;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            letter-spacing: 0.01em;
+            color: var(--text-main);
         }
 
         .navbar {
             width: 100%;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-light);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
@@ -44,6 +60,7 @@
             position: sticky;
             top: 0;
             z-index: 40;
+            box-shadow: var(--shadow-subtle);
         }
 
         .navbar-brand {
@@ -55,11 +72,6 @@
         .navbar-brand h1 {
             font-size: 1.5rem;
             font-weight: 800;
-            background: linear-gradient(to right, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0;
             letter-spacing: -0.5px;
         }
 
@@ -69,9 +81,9 @@
         }
 
         .btn-icon {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-main);
+            background: transparent;
+            border: 1px solid var(--border-input);
+            color: var(--text-muted);
             padding: 0.5rem 1rem;
             border-radius: 8px;
             cursor: pointer;
@@ -79,175 +91,237 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-family: inherit;
-            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
             font-weight: 500;
         }
 
         .btn-icon:hover {
-            background: rgba(255,255,255,0.1);
+            background: #F4F4F5;
+            color: var(--text-main);
         }
 
         .btn-icon.logout {
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
+            border-color: rgba(220, 38, 38, 0.2);
+            color: var(--error);
         }
 
         .btn-icon.logout:hover {
-            background: rgba(239, 68, 68, 0.15);
+            background: #FEF2F2;
         }
 
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 3rem 2rem;
+        }
+
+        .top-row {
             display: grid;
             grid-template-columns: 1fr;
             gap: 2rem;
-            padding: 2rem;
         }
 
         @media(min-width: 768px) {
-            .container { grid-template-columns: 350px 1fr; }
+            .top-row {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
             padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.2s ease;
+            box-shadow: var(--shadow-subtle);
+            transition: box-shadow 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: var(--shadow-medium);
         }
 
-        .card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; }
+        .card h2 { 
+            font-size: 1.375rem; 
+            font-weight: 600; 
+            margin-bottom: 1.5rem; 
+        }
 
         .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-muted); }
+        .form-group label { 
+            display: block; 
+            font-size: 0.875rem; 
+            font-weight: 500;
+            margin-bottom: 0.5rem; 
+            color: var(--text-muted); 
+        }
+        
         .form-control {
             width: 100%;
-            padding: 0.75rem 1rem;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.625rem 0.875rem;
+            background: var(--surface);
+            border: 1px solid var(--border-input);
             border-radius: 8px;
-            color: #fff;
-            font-family: inherit;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.2s;
         }
-        .form-control:focus { border-color: var(--primary); }
+        .form-control:hover { border-color: #D4D4D8; }
+        .form-control:focus { border: 2px solid var(--primary); padding: calc(0.625rem - 1px) calc(0.875rem - 1px); }
 
         .btn {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.625rem 1.25rem;
             border: none;
             border-radius: 8px;
-            font-family: inherit;
-            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            color: #FFFFFF;
         }
-        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        .btn:hover { background: var(--primary-hover); }
+
+        .btn-destructive {
+            background: var(--error);
+        }
+        .btn-destructive:hover {
+            background: #B91C1C;
+        }
 
         .session-list { display: flex; flex-direction: column; gap: 1rem; }
         .session-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
+            background: var(--surface);
+            border: 1px solid var(--border-light);
             padding: 1rem;
-            border-radius: 12px;
+            border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .session-info h3 { font-size: 1.1rem; font-weight: 600; }
+        .session-info h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+            border-radius: 9999px;
             font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 0.5rem;
+            font-family: 'Fira Code', monospace;
+            font-weight: 500;
         }
-        .status-connected { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
-        .status-disconnected { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
-        .status-waiting { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+        .status-connected { background: #F0FDF4; color: var(--success); }
+        .status-disconnected { background: #FEF2F2; color: var(--error); }
+        .status-waiting { background: #FFF7ED; color: var(--warning); }
 
         .action-btns { display: flex; gap: 0.5rem; }
         .btn-sm {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
             border-radius: 6px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: none;
+            background: var(--surface);
+            color: var(--primary);
+            border: 1px solid var(--primary);
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
-        .btn-sm:hover { background: rgba(255,255,255,0.2); }
+        .btn-sm:hover { background: #EFF6FF; }
 
-        /* Modal QR */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s;
-            z-index: 50;
+        .btn-sm.btn-danger {
+            color: var(--error);
+            border-color: var(--error);
         }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .btn-sm.btn-danger:hover {
+            background: #FEF2F2;
+        }
+
+        /* Modal Overlays */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.35); /* DocuForge overlay */
+            display: none; justify-content: center; align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.active { display: flex; }
         
         .modal-content {
-            background: var(--bg-color);
+            background: var(--surface);
             padding: 2rem;
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
-            max-width: 400px;
+            border-radius: 12px;
             width: 90%;
-            transform: scale(0.9);
-            transition: transform 0.3s;
-        }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        
-        #qrcode-container {
-            background: white; padding: 1rem; border-radius: 8px;
-            margin: 1.5rem auto; display: inline-block;
-            transition: opacity 0.2s ease;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: var(--shadow-large);
+            border: 1px solid var(--border-light);
         }
         
         .close-btn {
-            background: transparent; color: var(--text-muted); border: 1px solid var(--text-muted);
-            padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 1rem;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-input);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
         }
+        .close-btn:hover { background: #F4F4F5; color: var(--text-main); }
 
-        /* Toast Notification (DESIGN.md) */
+        #qrcode-container img { margin: 0 auto; border-radius: 8px; }
+        
+        /* Toast Notifications */
         #toast-container {
             position: fixed; bottom: 24px; right: 24px; z-index: 9999;
             display: flex; flex-direction: column; gap: 12px; pointer-events: none;
         }
 
         .toast-notification {
-            background: #FFFFFF; color: #18181B; font-family: 'Inter', sans-serif;
-            font-size: 14px; font-weight: 500; padding: 14px 20px;
-            border-radius: 8px; box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid #2563EB; display: flex; align-items: center; gap: 12px;
+            background: #18181B; color: #FFFFFF; font-family: 'Inter', sans-serif;
+            font-size: 0.875rem; padding: 12px 16px;
+            border-radius: 8px; box-shadow: var(--shadow-medium);
+            display: flex; align-items: center; gap: 12px;
             transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: auto; max-width: 320px; word-break: break-word;
         }
 
-        .toast-notification.toast-success { border-left-color: #16A34A; }
-        .toast-notification.toast-error { border-left-color: #DC2626; }
-        .toast-notification.toast-warning { border-left-color: #CA8A04; }
         .toast-notification.show { transform: translateX(0); }
-
     </style>
 </head>
 <body>
+
+    <!-- Login Section -->
+    <div id="loginSection" style="display: none; width: 100%; min-height: 100vh; justify-content: center; align-items: center; background: var(--bg-color);">
+        <div class="card" style="width: 90%; max-width: 400px; text-align: center; padding: 3rem 2rem;">
+            <img src="NETORA-LOGO.png" alt="NETORA Logo" style="height: 48px; width: auto; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-main);">Selamat Datang</h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 2rem;">Masuk ke Dashboard NETORA WA Gateway</p>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group" style="text-align: left;">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" class="form-control" required placeholder="Ketik username...">
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="form-control" required placeholder="Ketik password...">
+                </div>
+                <button type="submit" class="btn" id="btnLogin" style="width: 100%;">Masuk Sekarang</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Section -->
+    <div id="appSection" style="display: none; width: 100%; flex-direction: column; align-items: center;">
 
     <nav class="navbar">
         <div class="navbar-brand">
@@ -261,9 +335,9 @@
     </nav>
 
     <div class="container">
-        <!-- Sidebar Actions -->
-        <div>
-            <div class="card" style="margin-bottom: 1.5rem;">
+        <!-- Top Row Actions -->
+        <div class="top-row">
+            <div class="card">
                 <h2>+ Create Device (Nomor WA Baru)</h2>
                 <div class="form-group">
                     <label>Nama Device / Sesi ID (Tanpa Spasi, misal: pusat_01)</label>
@@ -363,11 +437,85 @@
         </div>
     </div>
 
+    </div> <!-- End App Section -->
+
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
     <script>
         const API_URL = ''; // Gunakan relative path karena di-serve dari port yg sama
+
+        // ----------------------------------------
+        // AUTHENTICATION & FETCH INTERCEPTOR
+        // ----------------------------------------
+        const originalFetch = window.fetch;
+        window.fetch = async function() {
+            let [resource, config] = arguments;
+            if (typeof resource === 'string' && resource.includes('/api/')) {
+                config = config || {};
+                config.headers = config.headers || {};
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    config.headers['Authorization'] = 'Basic ' + token;
+                }
+            }
+            const response = await originalFetch(resource, config);
+            if (response.status === 401) {
+                localStorage.removeItem('authToken');
+                document.getElementById('appSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'flex';
+            }
+            return response;
+        };
+
+        function initAuth() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('appSection').style.display = 'flex';
+                fetchSessions(); // Mulai load data
+                if (!window.pollingInterval) {
+                    window.pollingInterval = setInterval(fetchSessions, 10000);
+                }
+            } else {
+                document.getElementById('appSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'flex';
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUsername').value;
+            const pass = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('btnLogin');
+            
+            btn.textContent = 'Memeriksa...';
+            btn.disabled = true;
+
+            const token = btoa(user + ':' + pass);
+            
+            try {
+                const res = await originalFetch(`${API_URL}/api/sessions`, {
+                    headers: { 'Authorization': 'Basic ' + token }
+                });
+
+                if (res.ok) {
+                    localStorage.setItem('authToken', token);
+                    document.getElementById('loginUsername').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    initAuth();
+                    showToast("Login berhasil!", "toast-success");
+                } else {
+                    showToast("Username atau Password salah!", "toast-error");
+                }
+            } catch (err) {
+                showToast("Tidak dapat terhubung ke server.", "toast-error");
+            } finally {
+                btn.textContent = 'Masuk Sekarang';
+                btn.disabled = false;
+            }
+        }
+        // ----------------------------------------
         let qrPollingInterval = null;
         let currentPollingSession = null;
         let lastQrString = null;
@@ -385,14 +533,8 @@
         function logoutDashboard() {
             showConfirm("Apakah Anda yakin ingin keluar dari dashboard?", true).then((confirmed) => {
                 if (confirmed) {
-                    fetch(window.location.href, {
-                        method: 'GET',
-                        headers: { 'Authorization': 'Basic ' + btoa('logout:logout') }
-                    }).then(() => {
-                        window.location.reload(true);
-                    }).catch(() => {
-                        window.location.reload(true);
-                    });
+                    localStorage.removeItem('authToken');
+                    window.location.reload(true);
                 }
             });
         }
@@ -786,9 +928,8 @@
             }
         }
 
-        // Auto Refresh
-        fetchSessions();
-        setInterval(fetchSessions, 10000); // Polling background setiap 10 detik
+        // Initialize Auth
+        initAuth();
 
     </script>
 </body>
