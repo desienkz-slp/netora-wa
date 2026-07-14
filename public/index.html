@@ -289,6 +289,18 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
         </div>
     </div>
 
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content" style="max-width: 400px; padding: 24px; text-align: left; background: var(--card-bg); box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+            <h3 id="confirmTitle" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"></h3>
+            <p id="confirmMessage" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.6; white-space: pre-wrap;"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn-sm" style="background: rgba(255,255,255,0.1); padding: 8px 16px;" id="confirmBtnCancel">Cancel</button>
+                <button class="btn-sm" style="background: var(--primary); padding: 8px 16px;" id="confirmBtnOk">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
@@ -328,6 +340,39 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 300);
             }, 4000);
+        }
+
+        function showConfirm(message, isDanger = false) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                const title = document.getElementById('confirmTitle');
+                const msg = document.getElementById('confirmMessage');
+                const btnOk = document.getElementById('confirmBtnOk');
+                const btnCancel = document.getElementById('confirmBtnCancel');
+
+                // Determine styling and icon based on danger level
+                const iconHtml = isDanger ? '<span style="font-size:1.4rem;">⚠️</span>' : '<span style="font-size:1.4rem;">❔</span>';
+                title.innerHTML = `${iconHtml} <span style="color: #fff;">Konfirmasi</span>`;
+                btnOk.style.background = isDanger ? 'var(--danger)' : 'var(--primary)';
+                btnOk.innerText = isDanger ? 'Ya, Lanjutkan' : 'OK';
+                
+                // Clean up any warning emojis in the message text itself
+                msg.innerText = message.replace(/⚠️ PERHATIAN!\n\n/g, '').trim();
+
+                modal.classList.add('active');
+
+                const cleanup = () => {
+                    modal.classList.remove('active');
+                    btnOk.removeEventListener('click', onOk);
+                    btnCancel.removeEventListener('click', onCancel);
+                };
+
+                const onOk = () => { cleanup(); resolve(true); };
+                const onCancel = () => { cleanup(); resolve(false); };
+
+                btnOk.addEventListener('click', onOk);
+                btnCancel.addEventListener('click', onCancel);
+            });
         }
 
         async function fetchSessions() {
@@ -508,7 +553,7 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
         }
 
         async function reconnectSession(sessionId) {
-            if (!confirm(`Mencoba menghubungkan ulang sesi [${sessionId}]?`)) return;
+            if (!(await showConfirm(`Mencoba menghubungkan ulang sesi [${sessionId}]?`))) return;
             try {
                 const res = await fetch(`${API_URL}/api/session/reconnect`, {
                     method: 'POST',
@@ -524,7 +569,7 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
         }
 
         async function logoutSession(sessionId) {
-            if (!confirm(`⚠️ PERHATIAN!\n\nApakah Anda yakin ingin LOGOUT sesi [${sessionId}]?\nIni akan mencabut akses WhatsApp secara permanen.`)) return;
+            if (!(await showConfirm(`⚠️ PERHATIAN!\n\nApakah Anda yakin ingin LOGOUT sesi [${sessionId}]?\nIni akan mencabut akses WhatsApp secara permanen.`, true))) return;
             try {
                 const res = await fetch(`${API_URL}/api/session/logout`, {
                     method: 'POST',
@@ -540,7 +585,7 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
         }
 
         async function deleteSession(sessionId) {
-            if (!confirm(`Hapus paksa sesi [${sessionId}] dari memori dan dashboard?\nGunakan ini jika device nyangkut/error.`)) return;
+            if (!(await showConfirm(`Hapus paksa sesi [${sessionId}] dari memori dan dashboard?\nGunakan ini jika device nyangkut/error.`, true))) return;
             try {
                 const res = await fetch(`${API_URL}/api/session/delete`, {
                     method: 'POST',
@@ -583,9 +628,8 @@ Terima kasih telah menggunakan layanan kami. Semoga harimu menyenangkan! 🌟</t
             const username = document.getElementById('newUsername').value.trim();
             const password = document.getElementById('newPassword').value.trim();
 
-            if (!username || !password) return showToast("Username dan Password baru wajib diisi!");
-
-            if (!confirm("⚠️ PERHATIAN!\n\nApakah Anda yakin ingin mengganti kredensial login?\nSetelah tersimpan, halaman akan termuat ulang dan Anda harus login dengan akses yang baru.")) return;
+            if (!username || !password) return showToast("Username dan Password baru wajib diisi!", "warning");
+            if (!(await showConfirm("⚠️ PERHATIAN!\n\nApakah Anda yakin ingin mengganti kredensial login?\nSetelah tersimpan, halaman akan termuat ulang dan Anda harus login dengan akses yang baru.", true))) return;
 
             try {
                 const res = await fetch(`${API_URL}/api/settings/auth`, {
