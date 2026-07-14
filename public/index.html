@@ -684,12 +684,20 @@
                         statusText = 'Menunggu Scan QR';
                     }
 
+                    let profileInfo = '';
+                    if (session.phone) {
+                        profileInfo = `<div style="font-size: 0.85rem; color: var(--body); margin-top: 0.5rem;">
+                            <span>📱 ${session.phone}</span> ${session.name ? `<span style="opacity: 0.7;">• ${session.name}</span>` : ''}
+                        </div>`;
+                    }
+
                     // Render List
                     sessionList.innerHTML += `
                         <div class="session-item">
                             <div class="session-info">
                                 <h3>ID: ${session.sessionId}</h3>
-                                <span class="status-badge ${badgeClass}">${statusText}</span>
+                                <div><span class="status-badge ${badgeClass}">${statusText}</span></div>
+                                ${profileInfo}
                             </div>
                             <div class="action-btns">
                                 ${session.status !== 'Connected' ? `<button class="btn-sm" style="background:#3b82f6;" onclick="showQr('${session.sessionId}')">Lihat QR</button>` : ''}
