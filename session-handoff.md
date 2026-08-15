@@ -8,12 +8,13 @@
 - **Session Management**: Ability to generate QR code, link WhatsApp devices, and view active sessions seamlessly.
 - **Messaging (API)**: `/api/send` endpoint works perfectly for sending to personal numbers (auto-formatting `08` to `628@s.whatsapp.net`) and WhatsApp Groups.
 - **Group Module**: Auto-fetch groups from connected sessions, alphabetically sorted dropdown list.
+- **Integration & Robustness**: API `/api/send` now supports both `req.body` and `req.query` to accommodate HTTP POST from MikroTik RouterOS scripts.
 - **UI/UX Enhancements**:
-  - Dark mode Dashboard with full responsiveness.
-  - "Copy ID" clipboard button for WhatsApp groups with fallback compatibility for HTTP/IP access (`document.execCommand('copy')`).
-  - Self-contained UI modals (`resetInfoModal`, `confirmModal`) structurally placed to prevent display blocking.
-- **Security & Reset**: `reset.js` CLI tool created for Factory Reset, alongside a direct UI guide for executing the reset from the Terminal.
-- **Deployments**: Application has been fully pushed to Github and successfully pulled & restarted (PM2) on the Test-Dev Server (`172.18.20.136`).
+  - Added Pagination and Search filter to the Active Sessions list.
+  - Implemented `TomSelect` library for searchable dropdowns (Select Session & Select Group) with Dark Mode compatibility.
+  - Enhanced "Select Session" dropdown label format to clearly display `ID - Phone (Name)`.
+- **Documentation**: Added MikroTik RouterOS Script implementation example in the Dashboard UI.
+- **Deployments**: All UI/UX and backend robustness updates have been pushed to Github and successfully pulled & restarted on the Production/Live Server (`172.18.20.141`).
 
 ## Next Best Action (Tomorrow)
 - **Integration with Laravel Bill:** The next session will focus on connecting the `laravel-bill` repository to this `netora-wa` Gateway so that automated billing messages, invoices, and receipts can be sent out to customers.

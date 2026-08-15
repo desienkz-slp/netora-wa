@@ -350,6 +350,7 @@
             <h1>NETORA WA Gateway</h1>
         </div>
         <div class="navbar-actions">
+            <button id="btnUpdateApp" class="btn-icon" style="display: none; background-color: var(--primary); color: white; border: none; font-weight: 600; animation: pulse 2s infinite;" onclick="triggerSystemUpdate()">⬇️ Update Tersedia</button>
             <button class="btn-icon" onclick="openSettings()">⚙️ Pengaturan</button>
             <button class="btn-icon logout" onclick="logoutDashboard()">🚪 Logout</button>
         </div>
@@ -1185,6 +1186,48 @@
                 showToast("Terjadi kesalahan sistem saat menyimpan pengaturan.");
             }
         }
+
+        // ==========================================
+        // --- IN-APP UPDATER SYSTEM ---
+        // ==========================================
+        async function checkSystemUpdate() {
+            try {
+                const res = await fetch(`${API_URL}/api/system/check-update`);
+                const json = await res.json();
+                if (json.available) {
+                    document.getElementById('btnUpdateApp').style.display = 'flex';
+                    document.getElementById('btnUpdateApp').innerText = `⬇️ Update Tersedia (${json.commits_behind})`;
+                }
+            } catch (e) {
+                // Ignore errors
+            }
+        }
+
+        async function triggerSystemUpdate() {
+            if (!(await showConfirm(`PENTING!\n\nAda pembaruan sistem yang tersedia. Apakah Anda ingin meng-update dan me-restart sistem sekarang?`, true))) return;
+            try {
+                document.getElementById('btnUpdateApp').innerText = '🔄 Mengupdate...';
+                document.getElementById('btnUpdateApp').style.pointerEvents = 'none';
+                
+                await fetch(`${API_URL}/api/system/trigger-update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                showToast('Update sedang dijalankan. Halaman akan dimuat ulang...', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 15000);
+            } catch (e) {
+                showToast('Gagal memicu pembaruan', 'error');
+                document.getElementById('btnUpdateApp').innerText = '⬇️ Update Tersedia';
+                document.getElementById('btnUpdateApp').style.pointerEvents = 'auto';
+            }
+        }
+
+        // Check for update on load and every 1 hour
+        setTimeout(checkSystemUpdate, 3000);
+        setInterval(checkSystemUpdate, 3600000);
 
         // Initialize Auth
         initAuth();

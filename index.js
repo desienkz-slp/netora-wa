@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
@@ -334,6 +335,31 @@ app.post('/api/session/delete', (req, res) => {
     } catch (e) {
         res.status(500).json({ status: false, message: 'Gagal menghapus sesi.', error: e.message });
     }
+});
+// ==========================================
+// --- SYSTEM UPDATE API ---
+// ==========================================
+app.get('/api/system/check-update', (req, res) => {
+    exec('git fetch origin && git rev-list HEAD...origin/main --count', (err, stdout) => {
+        if (err) {
+            return res.json({ available: false, error: err.message });
+        }
+        const count = parseInt(stdout.trim(), 10) || 0;
+        res.json({ available: count > 0, commits_behind: count });
+    });
+});
+
+app.post('/api/system/trigger-update', (req, res) => {
+    // Respond first to avoid frontend timeout
+    res.json({ success: true, message: 'Update triggered, system will restart...' });
+    
+    setTimeout(() => {
+        console.log('[System] Triggering Auto-Update...');
+        exec('git pull origin main && pm2 restart netora-wa', (err, stdout, stderr) => {
+            if (err) console.error('[System] Auto-Update failed:', err);
+            else console.log('[System] Auto-Update success:', stdout);
+        });
+    }, 2000);
 });
 
 const PORT = 3000;
