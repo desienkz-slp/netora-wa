@@ -23,13 +23,23 @@ echo "[2/5] Instalasi Node.js (versi 20 LTS)..."
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs
 
-echo "[3/5] Instalasi PM2 (Process Manager)..."
+echo "[3/6] Instalasi PM2 (Process Manager)..."
 npm install -g pm2
 
-echo "[4/5] Instalasi Dependencies Aplikasi..."
+echo "[4/6] Inisialisasi Git untuk Auto-Update..."
+git config --global credential.helper store
+if [ ! -d ".git" ]; then
+    git init
+    git remote add origin https://github.com/desienkz-slp/netora-wa.git
+fi
+git fetch origin
+git branch -M main
+git reset --hard origin/main
+
+echo "[5/6] Instalasi Dependencies Aplikasi..."
 npm install
 
-echo "[5/5] Mengatur Auto-Start (PM2)..."
+echo "[6/6] Mengatur Auto-Start (PM2)..."
 pm2 start index.js --name "netora-wa"
 env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root
 pm2 save
