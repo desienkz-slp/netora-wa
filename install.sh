@@ -41,7 +41,7 @@ npm install
 
 echo "[6/6] Mengatur Auto-Start (PM2)..."
 pm2 start index.js --name "netora-wa"
-env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root
+pm2 startup
 pm2 save
 
 echo ""
