@@ -2,12 +2,25 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
+const crypto = require('crypto');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
+const packageInfo = require('./package.json');
 
 const app = express();
+const APP_VERSION = packageInfo.version || '0.0.0';
+
+function getGitCommitHash() {
+    try {
+        return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    } catch (_) {
+        return 'unknown';
+    }
+}
+
+const APP_COMMIT = getGitCommitHash();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,18 +40,58 @@ const DEFAULT_CONFIG = {
         enabled: false,
         url: '',
         authToken: '',
+        signatureSecret: '',
+        allowedIps: [],
         timeoutMs: 10000,
         retryCount: 2,
         retryDelayMs: 1200,
+        rateLimitPerMinute: 20,
         sendIncoming: true,
         sendFromMe: false,
         autoReply: true,
-        allowCommands: true
+        allowCommands: true,
+        commandAllowBroadcast: false
+    },
+    autoUpdate: {
+        enabled: true,
+        branch: 'main'
     }
 };
 
 const WEBHOOK_LOG_LIMIT = 300;
 const webhookLogs = [];
+
+const webhookRateLimit = new Map();
+
+function checkWebhookRateLimit(key, limit, windowMs) {
+    const now = Date.now();
+    const safeKey = String(key || 'global');
+    const row = webhookRateLimit.get(safeKey) || [];
+    const active = row.filter(ts => now - ts < windowMs);
+
+    if (active.length >= limit) {
+        webhookRateLimit.set(safeKey, active);
+        return false;
+    }
+
+    active.push(now);
+    webhookRateLimit.set(safeKey, active);
+    return true;
+}
+
+function verifyHermesSignature(rawBody, signature, secret) {
+    if (!secret) return true;
+    if (!signature) return false;
+
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    const normalized = String(signature).replace(/^sha256=/i, '');
+
+    try {
+        return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(normalized));
+    } catch (_) {
+        return false;
+    }
+}
 
 function pushWebhookLog(entry) {
     webhookLogs.push({
@@ -70,6 +123,10 @@ function loadConfig() {
             hermesWebhook: {
                 ...DEFAULT_CONFIG.hermesWebhook,
                 ...(raw.hermesWebhook || {})
+            },
+            autoUpdate: {
+                ...DEFAULT_CONFIG.autoUpdate,
+                ...(raw.autoUpdate || {})
             }
         };
     } catch (e) {
@@ -111,16 +168,21 @@ async function postToHermesWebhook(payload, webhookConfig) {
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+        const payloadString = JSON.stringify(payload);
         const headers = { 'Content-Type': 'application/json' };
         if (webhookConfig.authToken) {
             headers['Authorization'] = `Bearer ${webhookConfig.authToken}`;
             headers['X-Hermes-Token'] = webhookConfig.authToken;
         }
+        if (webhookConfig.signatureSecret) {
+            const sign = crypto.createHmac('sha256', webhookConfig.signatureSecret).update(payloadString).digest('hex');
+            headers['X-Netora-Signature'] = `sha256=${sign}`;
+        }
 
         const response = await fetch(webhookConfig.url, {
             method: 'POST',
             headers,
-            body: JSON.stringify(payload),
+            body: payloadString,
             signal: controller.signal
         });
 
@@ -296,19 +358,30 @@ async function initSession(sessionId) {
                 const command = hookResp.data?.command;
                 if (webhookConfig.allowCommands && command && typeof command === 'object') {
                     const action = String(command.action || '').toLowerCase();
+                    const limitPerMinute = Math.max(5, Number(webhookConfig.rateLimitPerMinute) || 20);
 
                     if (action === 'send' && command.to && command.message) {
-                        const toJid = normalizePhoneToJid(command.to);
-                        if (toJid) {
-                            await sock.sendMessage(toJid, { text: String(command.message) });
+                        if (!checkWebhookRateLimit(`cmd:send:${sessionId}`, limitPerMinute, 60_000)) {
+                            console.warn(`[${sessionId}] Command send ditolak (rate limit)`);
+                        } else {
+                            const toJid = normalizePhoneToJid(command.to);
+                            if (toJid) {
+                                await sock.sendMessage(toJid, { text: String(command.message) });
+                            }
                         }
                     }
 
                     if (action === 'broadcast' && Array.isArray(command.targets) && command.message) {
-                        for (const target of command.targets) {
-                            const jid = normalizePhoneToJid(target);
-                            if (!jid) continue;
-                            await sock.sendMessage(jid, { text: String(command.message) });
+                        if (!webhookConfig.commandAllowBroadcast) {
+                            console.warn(`[${sessionId}] Command broadcast ditolak (disabled)`);
+                        } else if (!checkWebhookRateLimit(`cmd:broadcast:${sessionId}`, Math.max(1, Math.floor(limitPerMinute / 2)), 60_000)) {
+                            console.warn(`[${sessionId}] Command broadcast ditolak (rate limit)`);
+                        } else {
+                            for (const target of command.targets) {
+                                const jid = normalizePhoneToJid(target);
+                                if (!jid) continue;
+                                await sock.sendMessage(jid, { text: String(command.message) });
+                            }
                         }
                     }
                 }
@@ -522,13 +595,17 @@ app.post('/api/settings/hermes-webhook', (req, res) => {
             enabled,
             url,
             authToken,
+            signatureSecret,
+            allowedIps,
             timeoutMs,
             retryCount,
             retryDelayMs,
+            rateLimitPerMinute,
             sendIncoming,
             sendFromMe,
             autoReply,
-            allowCommands
+            allowCommands,
+            commandAllowBroadcast
         } = req.body || {};
 
         const current = loadConfig();
@@ -537,13 +614,19 @@ app.post('/api/settings/hermes-webhook', (req, res) => {
             enabled: !!enabled,
             url: String(url || '').trim(),
             authToken: String(authToken || '').trim(),
+            signatureSecret: String(signatureSecret || '').trim(),
+            allowedIps: Array.isArray(allowedIps)
+                ? allowedIps.map(ip => String(ip || '').trim()).filter(Boolean)
+                : String(allowedIps || '').split(',').map(ip => ip.trim()).filter(Boolean),
             timeoutMs: Number(timeoutMs) > 0 ? Number(timeoutMs) : current.hermesWebhook.timeoutMs,
             retryCount: Number.isFinite(Number(retryCount)) ? Math.max(0, Math.min(5, Number(retryCount))) : (current.hermesWebhook.retryCount ?? 2),
             retryDelayMs: Number(retryDelayMs) > 0 ? Math.max(200, Number(retryDelayMs)) : (current.hermesWebhook.retryDelayMs ?? 1200),
+            rateLimitPerMinute: Number(rateLimitPerMinute) > 0 ? Math.max(5, Math.min(120, Number(rateLimitPerMinute))) : (current.hermesWebhook.rateLimitPerMinute ?? 20),
             sendIncoming: typeof sendIncoming === 'boolean' ? sendIncoming : current.hermesWebhook.sendIncoming,
             sendFromMe: typeof sendFromMe === 'boolean' ? sendFromMe : current.hermesWebhook.sendFromMe,
             autoReply: typeof autoReply === 'boolean' ? autoReply : current.hermesWebhook.autoReply,
-            allowCommands: typeof allowCommands === 'boolean' ? allowCommands : (current.hermesWebhook.allowCommands ?? true)
+            allowCommands: typeof allowCommands === 'boolean' ? allowCommands : (current.hermesWebhook.allowCommands ?? true),
+            commandAllowBroadcast: typeof commandAllowBroadcast === 'boolean' ? commandAllowBroadcast : (current.hermesWebhook.commandAllowBroadcast ?? false)
         };
 
         if (nextWebhook.enabled && !nextWebhook.url) {
@@ -573,6 +656,14 @@ app.post('/api/settings/hermes-webhook/test', async (req, res) => {
             return res.status(400).json({ status: false, message: 'Webhook URL belum diisi.' });
         }
 
+        const callerIp = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').toString().split(',')[0].trim();
+        if (Array.isArray(webhookConfig.allowedIps) && webhookConfig.allowedIps.length > 0) {
+            const matchIp = webhookConfig.allowedIps.includes(callerIp);
+            if (!matchIp) {
+                return res.status(403).json({ status: false, message: `IP ${callerIp} tidak diizinkan untuk test webhook.` });
+            }
+        }
+
         const payload = {
             event: 'test_ping',
             source: 'netora-wa',
@@ -580,7 +671,6 @@ app.post('/api/settings/hermes-webhook/test', async (req, res) => {
             text: req.body?.text || 'PING TEST dari NETORA WA Gateway',
             timestamp: Math.floor(Date.now() / 1000)
         };
-
         const hookResp = await postToHermesWebhookWithRetry(payload, webhookConfig);
         pushWebhookLog({
             sessionId: payload.sessionId,
@@ -679,22 +769,38 @@ app.post('/api/session/delete', (req, res) => {
 // --- SYSTEM UPDATE API ---
 // ==========================================
 app.get('/api/system/check-update', (req, res) => {
-    exec('git fetch origin && git rev-list HEAD...origin/main --count', (err, stdout) => {
+    const cfg = loadConfig();
+    const branch = cfg.autoUpdate?.branch || 'main';
+
+    exec(`git fetch origin && git rev-list HEAD...origin/${branch} --count`, (err, stdout) => {
         if (err) {
-            return res.json({ available: false, error: err.message });
+            return res.json({ available: false, error: err.message, version: APP_VERSION, commit: APP_COMMIT, branch });
         }
         const count = parseInt(stdout.trim(), 10) || 0;
-        res.json({ available: count > 0, commits_behind: count });
+        res.json({ available: count > 0, commits_behind: count, version: APP_VERSION, commit: APP_COMMIT, branch });
+    });
+});
+
+app.get('/api/system/version', (req, res) => {
+    const cfg = loadConfig();
+    res.json({
+        status: true,
+        version: APP_VERSION,
+        commit: APP_COMMIT,
+        branch: cfg.autoUpdate?.branch || 'main'
     });
 });
 
 app.post('/api/system/trigger-update', (req, res) => {
+    const cfg = loadConfig();
+    const branch = cfg.autoUpdate?.branch || 'main';
+
     // Respond first to avoid frontend timeout
-    res.json({ success: true, message: 'Update triggered, system will restart...' });
+    res.json({ success: true, message: `Update triggered from branch ${branch}, system will restart...` });
     
     setTimeout(() => {
         console.log('[System] Triggering Auto-Update...');
-        exec('git pull origin main && pm2 restart netora-wa', (err, stdout, stderr) => {
+        exec(`git pull origin ${branch} && npm install --omit=dev && pm2 restart netora-wa`, (err, stdout, stderr) => {
             if (err) console.error('[System] Auto-Update failed:', err);
             else console.log('[System] Auto-Update success:', stdout);
         });

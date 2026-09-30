@@ -468,6 +468,10 @@
             </div>
         </div>
 
+    <div style="text-align:center; color: var(--body); font-size: 0.8rem; margin: 2rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--hairline);">
+        <span id="appVersionFooter">Version: loading...</span>
+    </div>
+
     </div> <!-- End App Section -->
 
     <!-- Settings Modal -->
@@ -500,6 +504,14 @@
             <div class="form-group">
                 <label>Auth Token (opsional)</label>
                 <input type="text" id="hwToken" class="form-control" placeholder="token-rahasia-hermes">
+            </div>
+            <div class="form-group">
+                <label>Signature Secret (opsional, HMAC SHA256)</label>
+                <input type="text" id="hwSignature" class="form-control" placeholder="secret-untuk-signature">
+            </div>
+            <div class="form-group">
+                <label>Allow IP List (opsional, pisahkan koma)</label>
+                <input type="text" id="hwAllowedIps" class="form-control" placeholder="172.18.20.141,127.0.0.1">
             </div>
             <div class="form-group">
                 <label>Timeout (ms)</label>
@@ -688,6 +700,8 @@
                 document.getElementById('hwEnabled').checked = !!data.enabled;
                 document.getElementById('hwUrl').value = data.url || '';
                 document.getElementById('hwToken').value = data.authToken || '';
+                document.getElementById('hwSignature').value = data.signatureSecret || '';
+                document.getElementById('hwAllowedIps').value = Array.isArray(data.allowedIps) ? data.allowedIps.join(',') : (data.allowedIps || '');
                 document.getElementById('hwTimeout').value = data.timeoutMs || 10000;
                 document.getElementById('hwRetryCount').value = Number.isFinite(Number(data.retryCount)) ? Number(data.retryCount) : 2;
                 document.getElementById('hwRetryDelay').value = Number(data.retryDelayMs || 1200);
@@ -707,6 +721,8 @@
                 enabled: document.getElementById('hwEnabled').checked,
                 url: document.getElementById('hwUrl').value.trim(),
                 authToken: document.getElementById('hwToken').value.trim(),
+                signatureSecret: document.getElementById('hwSignature').value.trim(),
+                allowedIps: document.getElementById('hwAllowedIps').value.trim(),
                 timeoutMs: Number(document.getElementById('hwTimeout').value || 10000),
                 retryCount: Number(document.getElementById('hwRetryCount').value || 2),
                 retryDelayMs: Number(document.getElementById('hwRetryDelay').value || 1200),
@@ -1344,6 +1360,11 @@
             try {
                 const res = await fetch(`${API_URL}/api/system/check-update`);
                 const json = await res.json();
+                const footer = document.getElementById('appVersionFooter');
+                if (footer && json.version) {
+                    footer.innerText = `Version ${json.version} (${json.commit || 'unknown'}) • branch ${json.branch || 'main'}`;
+                }
+
                 if (json.available) {
                     document.getElementById('btnUpdateApp').style.display = 'flex';
                     document.getElementById('btnUpdateApp').innerText = `⬇️ Update Tersedia (${json.commits_behind})`;

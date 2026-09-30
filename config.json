@@ -5,12 +5,20 @@
     "enabled": false,
     "url": "",
     "authToken": "",
+    "signatureSecret": "",
+    "allowedIps": [],
     "timeoutMs": 10000,
     "retryCount": 2,
     "retryDelayMs": 1200,
+    "rateLimitPerMinute": 20,
     "sendIncoming": true,
     "sendFromMe": false,
     "autoReply": true,
-    "allowCommands": true
+    "allowCommands": true,
+    "commandAllowBroadcast": false
+  },
+  "autoUpdate": {
+    "enabled": true,
+    "branch": "main"
   }
 }
