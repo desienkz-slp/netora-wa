@@ -21,6 +21,7 @@
             --ink-strong: #ffffff;
             --body: #bdbdbd;
             --hairline: #3d3a39;
+            --mute: #8b949e;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -309,6 +310,71 @@
         }
 
         .toast-notification.show { transform: translateX(0); }
+
+        /* Operator workspace: softer hierarchy without changing existing actions. */
+        .navbar { padding: 12px 32px; min-height: 72px; }
+        .navbar-brand { gap: 12px; }
+        .navbar-brand h1 { font-size: 1.125rem; letter-spacing: -0.35px; }
+        .navbar-actions { align-items: center; gap: 8px; }
+        .container { max-width: 1320px; gap: 24px; padding: 32px 32px 48px; }
+        .workspace-intro { display: flex; justify-content: space-between; align-items: end; gap: 24px; padding: 12px 0 8px; }
+        .workspace-intro h2 { font-size: clamp(1.65rem, 2.5vw, 2.25rem); letter-spacing: -0.9px; line-height: 1.2; }
+        .workspace-intro p { color: var(--body); font-size: 0.875rem; margin-top: 8px; }
+        .workspace-label { display: block; color: var(--primary-soft); font-size: 0.75rem; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; margin-bottom: 8px; }
+        .workspace-shortcuts { display: flex; gap: 8px; flex-wrap: wrap; }
+        .workspace-shortcuts a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border: 1px solid var(--hairline); border-radius: 6px; color: var(--body); text-decoration: none; font-size: 0.875rem; transition: border-color .2s, color .2s, background .2s; }
+        .workspace-shortcuts a:hover { border-color: var(--primary-soft); color: var(--ink); background: var(--canvas-soft); }
+        .top-row { gap: 16px; }
+        @media (min-width: 768px) { .top-row { grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr); } }
+        .card { padding: 24px; scroll-margin-top: 96px; }
+        .card h2 { margin-bottom: 16px; letter-spacing: -0.3px; }
+        .top-row > .card { background: var(--canvas-soft); display: flex; flex-direction: column; }
+        .top-row > .card .btn { margin-top: auto; }
+        .card-caption { color: var(--body); font-size: 0.875rem; line-height: 1.5; margin: -4px 0 20px; }
+        .form-group label { font-weight: 500; }
+        .form-control { min-height: 44px; }
+        .btn, .btn-icon, .btn-sm, .close-btn { min-height: 44px; }
+        .btn:focus-visible, .btn-icon:focus-visible, .btn-sm:focus-visible, .close-btn:focus-visible,
+        .workspace-shortcuts a:focus-visible, .form-control:focus-visible { outline: 2px solid var(--primary-soft); outline-offset: 2px; }
+        .btn:disabled, .btn-sm:disabled { cursor: not-allowed; }
+        .target-options { display: flex; gap: 8px; flex-wrap: wrap; }
+        .target-options label { min-height: 44px; padding: 8px 12px; border: 1px solid var(--hairline); border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--ink); }
+        .target-options label:has(input:checked) { border-color: var(--primary-soft); background: var(--canvas); }
+        .target-options input { accent-color: var(--primary); }
+        .session-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+        .session-toolbar h2 { margin: 0; }
+        .session-toolbar p { color: var(--body); font-size: 0.875rem; margin-top: 4px; }
+        .session-tools { display: flex; gap: 8px; align-items: center; flex: 1; max-width: 400px; }
+        .session-list { gap: 8px; }
+        .session-item { padding: 16px 20px; background: var(--canvas-soft); gap: 16px; transition: border-color .2s; }
+        .session-item:hover { border-color: var(--mute); }
+        .session-info { min-width: 0; }
+        .session-info h3 { overflow-wrap: anywhere; }
+        .action-btns { flex-wrap: wrap; justify-content: flex-end; }
+        .btn-sm { padding: 8px 12px; }
+        .api-guide { background: var(--canvas-soft); }
+        .modal-overlay { padding: 16px; overflow-y: auto; }
+        .modal-content { max-height: calc(100dvh - 32px); overflow-y: auto; }
+        #settingsModal .modal-content { background: var(--canvas); }
+        #toast-container { max-width: calc(100vw - 32px); }
+        @media (max-width: 767px) {
+            .navbar { padding: 12px 16px; flex-wrap: wrap; gap: 12px; }
+            .navbar-brand h1 { font-size: 1rem; }
+            .navbar-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
+            .container { padding: 20px 16px 40px; gap: 16px; }
+            .workspace-intro { align-items: flex-start; flex-direction: column; padding: 4px 0; gap: 16px; }
+            .card { padding: 20px 16px; }
+            .session-tools { flex: 1 1 100%; max-width: none; }
+            .session-item { flex-direction: column; align-items: stretch; }
+            .action-btns { justify-content: flex-start; }
+            .action-btns .btn-sm { flex: 1 1 auto; }
+            #paginationControls { flex-wrap: wrap; }
+            #toast-container { right: 16px; bottom: 16px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .btn, .btn-icon, .btn-sm, .session-item, .workspace-shortcuts a, .toast-notification { transition: none; }
+            #btnUpdateApp { animation: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -356,32 +422,69 @@
         </div>
     </nav>
 
-    <div class="container">
-        <!-- Top Row Actions -->
-        <div class="top-row">
-            <div class="card">
-                <h2>+ Create Device (Nomor WA Baru)</h2>
-                <div class="form-group">
-                    <label>Nama Device / Sesi ID (Tanpa Spasi, misal: pusat_01)</label>
-                    <input type="text" id="newSessionId" class="form-control" placeholder="Ketik nama device...">
+    <main class="container">
+        <header class="workspace-intro">
+            <div>
+                <span class="workspace-label">Workspace / WhatsApp Gateway</span>
+                <h2>Kelola perangkat &amp; pesan</h2>
+                <p>Pantau koneksi, hubungkan device, dan uji pengiriman dalam satu tempat.</p>
+            </div>
+            <div class="workspace-shortcuts" aria-label="Pintasan halaman">
+                <a href="#sessions">Daftar sesi</a>
+                <a href="#quick-actions">Aksi cepat</a>
+                <a href="#api-guide">Panduan API</a>
+            </div>
+        </header>
+
+        <!-- Session List -->
+        <section class="card" id="sessions" aria-labelledby="sessionsTitle">
+            <div class="session-toolbar">
+                <div>
+                    <h2 id="sessionsTitle">Daftar sesi</h2>
+                    <p>Pantau status dan kelola perangkat WhatsApp Anda.</p>
                 </div>
-                <button class="btn" onclick="startSession()">Create & Munculkan QR</button>
+                <div class="session-tools">
+                    <input type="search" id="searchInput" class="form-control" placeholder="Cari ID / nomor / nama..." aria-label="Cari sesi" oninput="handleSearch()">
+                    <button class="btn-sm" onclick="fetchSessions()">Refresh</button>
+                </div>
+            </div>
+            <div class="session-list" id="sessionList">
+                <div style="text-align:center; color: var(--body); padding: 2rem;">Loading data...</div>
+            </div>
+            <div id="paginationControls" style="display: none; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn-sm" id="btnPrevPage" onclick="changePage(-1)">Sebelumnya</button>
+                <span id="pageInfo" style="font-size: 0.875rem; color: var(--body);">Halaman 1 / 1</span>
+                <button class="btn-sm" id="btnNextPage" onclick="changePage(1)">Selanjutnya</button>
+            </div>
+        </section>
+
+        <!-- Top Row Actions -->
+        <div class="top-row" id="quick-actions">
+            <div class="card">
+                <h2>Hubungkan device baru</h2>
+                <p class="card-caption">Buat sesi, lalu pindai QR dengan WhatsApp untuk menghubungkan perangkat.</p>
+                <div class="form-group">
+                    <label for="newSessionId">ID device (huruf kecil, angka, atau tanda -)</label>
+                    <input type="text" id="newSessionId" class="form-control" placeholder="Contoh: pusat-01">
+                </div>
+                <button class="btn" onclick="startSession()">Buat sesi &amp; tampilkan QR</button>
                 <p id="sessionErrorText" style="color: var(--primary-soft); font-size: 0.85rem; margin-top: 0.75rem; display: none;"></p>
             </div>
 
             <div class="card">
-                <h2>Uji Kirim Pesan</h2>
+                <h2>Uji kirim pesan</h2>
+                <p class="card-caption">Cek koneksi dengan mengirim pesan percobaan ke nomor atau grup.</p>
                 <div class="form-group">
                     <label>Pilih ID Sesi (Pengirim)</label>
                     <select id="sendSessionId" class="form-control"></select>
                 </div>
                 <div class="form-group">
                     <label style="margin-bottom: 0.8rem;">Tipe Target</label>
-                    <div style="display: flex; gap: 1rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <div class="target-options">
+                        <label>
                             <input type="radio" name="targetType" value="number" checked onchange="toggleTargetInput()"> Nomor WA
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <label>
                             <input type="radio" name="targetType" value="group" onchange="toggleTargetInput()"> Grup WA
                         </label>
                     </div>
@@ -399,33 +502,12 @@
                         <button class="btn-icon" style="background: rgba(255,255,255,0.1); padding: 0 16px; height: 42px; border-radius: 8px;" onclick="copySelectedGroupId()" title="Copy ID Grup">📋</button>
                     </div>
                 </div>
-                <button class="btn" style="background: var(--primary);" onclick="testSendMessage()">TEST</button>
-            </div>
-        </div>
-
-        <!-- Session List -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                <h2 style="margin: 0;">Daftar Sesi (Device Aktif)</h2>
-                <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; max-width: 400px; justify-content: flex-end;">
-                    <input type="text" id="searchInput" class="form-control" style="padding: 0.5rem; font-size: 0.85rem;" placeholder="Cari ID/Nomor..." oninput="handleSearch()">
-                    <button class="btn-sm" onclick="fetchSessions()">🔄 Refresh</button>
-                </div>
-            </div>
-            
-            <div class="session-list" id="sessionList">
-                <div style="text-align:center; color: var(--body); padding: 2rem;">Loading data...</div>
-            </div>
-
-            <div id="paginationControls" style="display: none; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem;">
-                <button class="btn-sm" id="btnPrevPage" onclick="changePage(-1)">Sebelumnya</button>
-                <span id="pageInfo" style="font-size: 0.875rem; color: var(--body);">Halaman 1 / 1</span>
-                <button class="btn-sm" id="btnNextPage" onclick="changePage(1)">Selanjutnya</button>
+                <button class="btn" onclick="testSendMessage()">Kirim pesan percobaan</button>
             </div>
         </div>
 
         <!-- API Documentation -->
-        <div class="card">
+        <section class="card api-guide" id="api-guide">
             <h2>📚 Dokumentasi API (Kirim Pesan)</h2>
             <p style="color: var(--body); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">
                 Gunakan format POST request untuk mengirim pesan lewat aplikasi eksternal (MikroTik/Laravel). Wajib menyertakan <b>Basic Auth</b> di pengaturan <i>request</i> Anda.
@@ -466,12 +548,12 @@
   http-data="phone=$nomor&message=$message" \
   keep-result=no</div>
             </div>
-        </div>
+        </section>
 
-    <div style="text-align:center; color: var(--body); font-size: 0.8rem; margin: 2rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--hairline);">
-        <span id="appVersionFooter">Version: loading...</span>
-    </div>
-
+        <footer style="text-align:center; color: var(--body); font-size: 0.8rem; padding-top: 1rem; border-top: 1px solid var(--hairline);">
+            <span id="appVersionFooter">Version: loading...</span>
+        </footer>
+    </main>
     </div> <!-- End App Section -->
 
     <!-- Settings Modal -->
