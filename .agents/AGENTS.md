@@ -17,3 +17,12 @@
 1. You MUST always consult and read the `C:\xampp\htdocs\netora-wa\.agents\DESIGN.md` file before generating or modifying any user interface elements.
 2. Strictly use the colors (e.g., Primary `#2563EB`, Surface `#FFFFFF`, Success `#16A34A`), typography (Plus Jakarta Sans, Inter, Fira Code), spacing, border-radii, and elevation rules defined in the design system.
 3. Do not invent new styling rules or colors that conflict with the `DESIGN.md`. Ensure that buttons, cards, inputs, and notifications follow the exact design tokens specified.
+
+# Rule: In-App Updater Architecture (NETORA WA Gateway)
+
+## Context
+Sama seperti Radius-UI, aplikasi ini menggunakan sistem Pull-Based Deployment (Manual 1-Click Update dari Web UI) untuk memperbarui dirinya sendiri. Backend (index.js) mengecek pembaruan via rute /api/system/check-update menggunakan perintah git fetch origin dan mengeksekusinya via /api/system/trigger-update dengan perintah git pull origin main && pm2 restart netora-wa.
+
+## Instructions
+1. **Mandatory Git Initialization**: Syarat mutlak agar fitur ini berjalan adalah folder root aplikasi di server klien (misal /var/www/netora-wa) WAJIB diinisialisasi sebagai repositori Git (git init) yang terhubung ke origin GitHub.
+2. **No Auto-Pull Cron**: DILARANG menggunakan *cron job* *auto-pull* di server. Biarkan klien yang melakukan *update* secara manual lewat klik tombol Update di navbar Header UI agar pembaruan tetap relevan dan terkontrol.

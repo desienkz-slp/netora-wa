@@ -1,4 +1,16 @@
 {
-    "username": "superadmin",
-    "password": "admin123"
+  "username": "superadmin",
+  "password": "admin123",
+  "hermesWebhook": {
+    "enabled": false,
+    "url": "",
+    "authToken": "",
+    "timeoutMs": 10000,
+    "retryCount": 2,
+    "retryDelayMs": 1200,
+    "sendIncoming": true,
+    "sendFromMe": false,
+    "autoReply": true,
+    "allowCommands": true
+  }
 }

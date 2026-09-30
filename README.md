@@ -8,6 +8,7 @@ Aplikasi Multi-Device WhatsApp Gateway berbasis [Baileys](https://github.com/Whi
 - **Keamanan Ganda**: Dilindungi oleh HTTP Basic Auth yang kredensialnya tersimpan secara dinamis di `config.json`.
 - **Auto-Resume**: Koneksi WhatsApp akan otomatis menyala kembali jika VPS / Server mengalami *restart*.
 - **Panic Button**: Script `reset.sh` siap sedia (via SSH) jika Anda lupa password.
+- **Hermes Webhook (AI CS Digital)**: Pesan masuk WA bisa diteruskan ke endpoint Hermes untuk diproses AI, lalu dibalas otomatis ke user.
 
 ## 🔧 Panduan Instalasi di Fresh Server (VPS)
 Ikuti langkah-langkah di bawah ini untuk menginstal aplikasi di server VPS baru Anda (Direkomendasikan Ubuntu 22.04 / 24.04):
@@ -42,6 +43,34 @@ Ikuti langkah-langkah di bawah ini untuk menginstal aplikasi di server VPS baru 
 | `GET` | `/api/status?sessionId=...` | Mengecek status koneksi (Connected/Disconnected) |
 | `POST` | `/api/send` | Body: `{ "sessionId": "cabang_a", "phone": "08xxx", "message": "Isi pesan" }` |
 | `GET` | `/api/sessions` | Menampilkan semua device aktif |
+| `POST` | `/api/settings/hermes-webhook` | Simpan pengaturan webhook Hermes (AI CS) |
+| `GET` | `/api/settings/hermes-webhook` | Ambil pengaturan webhook Hermes |
+| `POST` | `/api/settings/hermes-webhook/test` | Test koneksi ke endpoint Hermes |
+| `GET` | `/api/settings/hermes-webhook/logs?limit=25` | Ambil log webhook terbaru |
+
+### Contoh Payload Webhook Hermes
+Saat ada pesan masuk, server akan kirim `POST` JSON ke URL webhook Hermes:
+
+```json
+{
+  "event": "incoming_message",
+  "source": "netora-wa",
+  "sessionId": "cabang_a",
+  "fromMe": false,
+  "remoteJid": "62812xxxx@s.whatsapp.net",
+  "senderJid": "62812xxxx@s.whatsapp.net",
+  "pushName": "Budi",
+  "text": "Halo, saya mau tanya paket internet",
+  "messageId": "BAE5...",
+  "timestamp": 1727671001
+}
+```
+
+Jika endpoint Hermes mengembalikan JSON berikut, gateway akan auto-reply ke user (jika `autoReply=true`):
+
+```json
+{ "reply": "Halo Kak, siap dibantu. Mau paket area mana?" }
+```
 
 ---
 **Developer:** upluk-upluk_dev
