@@ -36,6 +36,7 @@ const CONFIG_FILE = path.join(__dirname, 'config.json');
 const DEFAULT_CONFIG = {
     username: 'superadmin',
     password: 'admin123',
+    queueDelayMs: 1500,
     hermesWebhook: {
         enabled: false,
         url: '',
@@ -120,6 +121,7 @@ function loadConfig() {
         return {
             ...DEFAULT_CONFIG,
             ...raw,
+            queueDelayMs: Number(raw.queueDelayMs) || DEFAULT_CONFIG.queueDelayMs,
             hermesWebhook: {
                 ...DEFAULT_CONFIG.hermesWebhook,
                 ...(raw.hermesWebhook || {})
@@ -245,6 +247,71 @@ app.use(['/api', '/send'], (req, res, next) => {
 // Tempat menyimpan data semua sesi aktif di memori
 const sessions = new Map();
 
+// ==========================================
+// --- MESSAGE QUEUE SYSTEM PER DEVICE ---
+// ==========================================
+const messageQueues = new Map(); // sessionId -> Array of queue items
+const queueWorkers = new Map(); // sessionId -> boolean (is processing)
+const queueStats = new Map(); // sessionId -> { totalProcessed, totalFailed, lastProcessedAt }
+
+function getQueue(sessionId) {
+    if (!messageQueues.has(sessionId)) {
+        messageQueues.set(sessionId, []);
+    }
+    return messageQueues.get(sessionId);
+}
+
+function getQueueStats(sessionId) {
+    if (!queueStats.has(sessionId)) {
+        queueStats.set(sessionId, { totalProcessed: 0, totalFailed: 0, lastProcessedAt: null });
+    }
+    return queueStats.get(sessionId);
+}
+
+async function processQueue(sessionId) {
+    if (queueWorkers.get(sessionId)) return;
+    queueWorkers.set(sessionId, true);
+
+    const queue = getQueue(sessionId);
+    const stats = getQueueStats(sessionId);
+    const cfg = loadConfig();
+    const baseDelay = Math.max(500, Number(cfg.queueDelayMs) || 1500);
+
+    try {
+        while (queue.length > 0) {
+            const session = sessions.get(sessionId);
+            if (!session || !session.connected) {
+                console.warn(`[Queue:${sessionId}] Device terputus atau sesi tidak aktif. Antrean dijeda (${queue.length} pesan tersisa).`);
+                break;
+            }
+
+            const item = queue[0];
+            try {
+                await session.sock.sendMessage(item.phone, { text: item.message });
+                stats.totalProcessed++;
+                stats.lastProcessedAt = new Date().toISOString();
+                queue.shift(); // Selesai, hapus dari antrean
+                console.log(`[Queue:${sessionId}] ✅ Pesan terkirim ke ${item.phone} (Sisa antrean: ${queue.length})`);
+            } catch (err) {
+                item.attempts = (item.attempts || 0) + 1;
+                console.error(`[Queue:${sessionId}] ❌ Gagal kirim ke ${item.phone} (Percobaan ${item.attempts}/3):`, err.message);
+                if (item.attempts >= 3) {
+                    stats.totalFailed++;
+                    queue.shift(); // Hapus setelah 3 kali gagal agar tidak macet
+                }
+            }
+
+            if (queue.length > 0) {
+                // Jeda alami + jitter 200-500ms untuk menyerupai pengetikan manusia & hindari deteksi spam WA
+                const jitter = Math.floor(Math.random() * 400);
+                await sleep(baseDelay + jitter);
+            }
+        }
+    } finally {
+        queueWorkers.set(sessionId, false);
+    }
+}
+
 // Direktori root untuk menyimpan autentikasi masing-masing device
 const SESSIONS_DIR = path.join(__dirname, 'sessions');
 if (!fs.existsSync(SESSIONS_DIR)) {
@@ -301,6 +368,9 @@ async function initSession(sessionId) {
             currentSession.connected = true;
             currentSession.qr = null;
             console.log(`[${sessionId}] ✅ WA Berhasil Terhubung!`);
+            if (getQueue(sessionId).length > 0) {
+                processQueue(sessionId);
+            }
         }
     });
 
@@ -366,7 +436,15 @@ async function initSession(sessionId) {
                         } else {
                             const toJid = normalizePhoneToJid(command.to);
                             if (toJid) {
-                                await sock.sendMessage(toJid, { text: String(command.message) });
+                                const queue = getQueue(sessionId);
+                                queue.push({
+                                    id: Date.now() + '-cmd',
+                                    phone: toJid,
+                                    message: String(command.message),
+                                    attempts: 0,
+                                    createdAt: Date.now()
+                                });
+                                processQueue(sessionId);
                             }
                         }
                     }
@@ -377,11 +455,19 @@ async function initSession(sessionId) {
                         } else if (!checkWebhookRateLimit(`cmd:broadcast:${sessionId}`, Math.max(1, Math.floor(limitPerMinute / 2)), 60_000)) {
                             console.warn(`[${sessionId}] Command broadcast ditolak (rate limit)`);
                         } else {
+                            const queue = getQueue(sessionId);
                             for (const target of command.targets) {
                                 const jid = normalizePhoneToJid(target);
                                 if (!jid) continue;
-                                await sock.sendMessage(jid, { text: String(command.message) });
+                                queue.push({
+                                    id: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                                    phone: jid,
+                                    message: String(command.message),
+                                    attempts: 0,
+                                    createdAt: Date.now()
+                                });
                             }
+                            processQueue(sessionId);
                         }
                     }
                 }
@@ -487,7 +573,7 @@ app.get('/api/qr', (req, res) => {
     }
 });
 
-// 4. Kirim Pesan Multi-Device (Mendukung JSON dan URL-Encoded)
+// 4. Kirim Pesan Multi-Device (Mendukung JSON dan URL-Encoded dengan Antrean)
 app.post(['/api/send', '/send/message'], async (req, res) => {
     // Dukung parameter dari body maupun query string (kompatibilitas MikroTik lama)
     const sessionId = req.body.sessionId || req.query.sessionId || req.query.device_id;
@@ -503,20 +589,80 @@ app.post(['/api/send', '/send/message'], async (req, res) => {
         return res.status(503).json({ status: false, message: `Device [${sessionId}] belum terkoneksi / terputus.` });
     }
 
-    try {
-        let formattedPhone = normalizePhoneToJid(phone);
-        if (!formattedPhone) {
-            return res.status(400).json({ status: false, message: 'Format phone/JID tidak valid.' });
-        }
-
-        // Kirim lewat socket spesifik
-        await session.sock.sendMessage(formattedPhone, { text: message });
-        
-        res.json({ status: true, message: `Pesan berhasil dikirim via [${sessionId}]!` });
-    } catch (error) {
-        console.error(`Error send via [${sessionId}]:`, error);
-        res.status(500).json({ status: false, message: 'Gagal mengirim pesan.', error: error.message });
+    const formattedPhone = normalizePhoneToJid(phone);
+    if (!formattedPhone) {
+        return res.status(400).json({ status: false, message: 'Format phone/JID tidak valid.' });
     }
+
+    const queue = getQueue(sessionId);
+    const MAX_QUEUE_LIMIT = 5000;
+    if (queue.length >= MAX_QUEUE_LIMIT) {
+        return res.status(429).json({ status: false, message: `Antrean device [${sessionId}] penuh (${queue.length} pesan). Silakan coba beberapa saat lagi.` });
+    }
+
+    const jobId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    queue.push({
+        id: jobId,
+        phone: formattedPhone,
+        message: String(message),
+        attempts: 0,
+        createdAt: Date.now()
+    });
+
+    // Jalankan background worker antrean
+    processQueue(sessionId);
+
+    // Respon instan agar pemanggil (Laravel, MikroTik, cURL) tidak timeout saat burst request
+    res.json({
+        status: true,
+        message: `Pesan berhasil dimasukkan ke antrean [${sessionId}]!`,
+        queueId: jobId,
+        queuePosition: queue.length
+    });
+});
+
+// 4.1 Monitoring & Status Antrean
+app.get('/api/queue/status', (req, res) => {
+    const { sessionId } = req.query;
+    if (!sessionId) {
+        const summary = {};
+        messageQueues.forEach((q, sid) => {
+            const stats = getQueueStats(sid);
+            summary[sid] = {
+                pending: q.length,
+                isProcessing: !!queueWorkers.get(sid),
+                totalProcessed: stats.totalProcessed,
+                totalFailed: stats.totalFailed,
+                lastProcessedAt: stats.lastProcessedAt
+            };
+        });
+        return res.json({ status: true, data: summary });
+    }
+
+    const queue = getQueue(sessionId);
+    const stats = getQueueStats(sessionId);
+    res.json({
+        status: true,
+        sessionId,
+        pending: queue.length,
+        isProcessing: !!queueWorkers.get(sessionId),
+        totalProcessed: stats.totalProcessed,
+        totalFailed: stats.totalFailed,
+        lastProcessedAt: stats.lastProcessedAt
+    });
+});
+
+// 4.2 Bersihkan Antrean (Emergency Clear)
+app.post('/api/queue/clear', (req, res) => {
+    const { sessionId } = req.body;
+    if (!sessionId) return res.status(400).json({ status: false, message: 'Parameter sessionId wajib diisi' });
+
+    if (messageQueues.has(sessionId)) {
+        const count = messageQueues.get(sessionId).length;
+        messageQueues.set(sessionId, []);
+        return res.json({ status: true, message: `Antrean [${sessionId}] sebanyak ${count} pesan berhasil dikosongkan.` });
+    }
+    res.json({ status: true, message: `Antrean [${sessionId}] kosong.` });
 });
 
 // 4.5 Ambil Data Grup dari Device
